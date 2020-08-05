@@ -888,7 +888,6 @@ bool process_modifier(uint16_t keycode, keyrecord_t *record) {
       }
       return true;
       break;
-    //case KC
   }
   return false;
 }
