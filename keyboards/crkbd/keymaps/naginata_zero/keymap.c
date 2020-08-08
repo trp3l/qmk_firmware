@@ -95,18 +95,18 @@ qk_tap_dance_action_t tap_dance_actions[] = {
 #define LT_ENTER LT(_LOWER,KC_ENTER)
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	[_XIN] = LAYOUT(
-		LALT_T(KC_ESCAPE),	KC_Q, 		KC_A,	 KC_R,	 KC_D,	   KC_RIGHT,		KC_LEFT, KC_BSPACE,KC_U,	   KC_P,	KC_Z,		KC_PSCREEN,
-		LSFT_T(KC_DELETE),	S_CUT_W,	KC_S,	 KC_H,	 KC_T,	   KC_G,			KC_Y,	 KC_I,	   KC_E,	   KC_O,	KC_N,	  	KC_BSPACE,
-		LWIN(LSFT(KC_KPS)),	JP_COLN,	KC_F,	 KC_V,	 KC_C,	   KC_X,			KC_M,	 KC_L,	   KC_J,	   KC_B,	KC_K,	RWIN_T(KC_SLEP),
-								TD(PRN_DANCE), LCTL_T(KC_BSPACE),  LT_TAB,			LT_ENTER, RSFT_T(KC_SPACE), TD(COMMA_DANCE)
+	LALT_T(KC_ESCAPE),	KC_Q, 		KC_A,	 KC_R,	 KC_D,	   KC_RIGHT,		KC_LEFT, KC_BSPACE,KC_U,   KC_P,	KC_Z,		KC_PSCREEN,
+	LSFT_T(KC_DELETE),	S_CUT_W,	KC_S,	 KC_H,	 KC_T,	   KC_G,			KC_Y,	 KC_I,	  KC_E,	   KC_O,	KC_N,	  	KC_BSPACE,
+LWIN_T(LSFT(KC_KPS)),   JP_COLN,	KC_F,	 KC_V,	 KC_C,	   KC_X,			KC_M,    KC_L,	  KC_J,	   KC_B,	KC_K,	RWIN_T(KC_SLEP),
+							TD(PRN_DANCE), LCTL_T(KC_SPACE), LT_TAB,			LT_ENTER, RSFT_T(KC_SPACE), TD(COMMA_DANCE)
 		),
 
 
 	[_NAGINATA] = LAYOUT(
-		_______ ,NG_Q,	   NG_W,	NG_E,	NG_R,	  NG_RIGHT, NG_LEFT, NG_U,    NG_I,    NG_O,    NG_P,    _______,
-		_______ ,NG_A,	   NG_S,	NG_D,	NG_F,	  NG_G,		NG_H,    NG_J,    NG_K,    NG_L,    NG_SCLN, _______,
-		_______ ,NG_Z,	   NG_X,	NG_C,	NG_V,	  NG_B,		NG_N,    NG_M,    NG_COMM, NG_DOT,  NG_SLSH, _______,
-						_______, NG_SHFT2,  LT_TAB,		LT_ENTER, NG_SHFT, _______
+		_______ ,NG_Q,	   NG_W,	NG_E,	NG_R,	  NG_RIGHT, 	NG_LEFT, NG_U,    NG_I,    NG_O,    NG_P,    _______,
+		_______ ,NG_A,	   NG_S,	NG_D,	NG_F,	  NG_G,			NG_H,    NG_J,    NG_K,    NG_L,    NG_SCLN, _______,
+		_______ ,NG_Z,	   NG_X,	NG_C,	NG_V,	  NG_B,			NG_N,    NG_M,    NG_COMM, NG_DOT,  NG_SLSH, _______,
+								_______,	NG_SHFT2, LT_TAB,		LT_ENTER, NG_SHFT, _______
 		),
 
 
@@ -121,13 +121,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 			JP_TILD ,JP_BSLS ,	JP_AT,	  JP_EXLM,	    	KC_QUES,	JP_PIPE,		_______ ,_______ ,KC_PGUP ,KC_INS  ,_______ ,_______ ,
 			JP_UNDS ,JP_DQT,	JP_QUOT,  TD(BRC_DANCE),	TD(CBR_DANCE),	JP_GRV,			KC_PAUSE,KC_HOME ,KC_PGDN ,KC_END  ,_______ ,KC_BSPACE ,
 			KC_INS  ,JP_HASH, 	KC_DLR,   JP_CIRC,		KC_RABK, 	JP_AMPR,		_______ ,_______ ,KC_APP  ,_______ ,_______ ,_______ ,
-							  KC_LABK, 	    LCTL_T(KC_BSPACE),	LT_TAB,		XXXXXXX ,RSFT_T(KC_SPACE) ,TD(COMMA_DANCE)
+							  KC_LABK, 	    LSFT_T(KC_BSPACE),	LT_TAB,		XXXXXXX ,RSFT_T(KC_SPACE) ,TD(COMMA_DANCE)
 		),
 
 
 	[_RAISE] = LAYOUT(
 		_______,JP_DOT, 	KC_F9,	KC_F10,	KC_F11,	KC_F12,			JP_YEN  ,KC_7,	 KC_8,	KC_9 ,	KC_SLASH,	JP_ASTR,
-		_______,KC_SPACE,	KC_F5, 	KC_F6,	KC_F7,	KC_F8,		KC_UP   ,KC_4,	 KC_5,	KC_6, 	JP_EQL,		JP_PLUS,
+		_______,KC_BSPACE,	KC_F5, 	KC_F6,	KC_F7,	KC_F8,		KC_UP   ,KC_4,	 KC_5,	KC_6, 	JP_EQL,		JP_PLUS,
 		_______,KC_ENTER, 	KC_F1,	KC_F2,	KC_F3, 	KC_F4,		KC_DOWN ,KC_1,	 KC_2,	KC_3,	KC_MINUS,	KC_PERC,
 									_______,_______,XXXXXXX,	KC_ENTER,JP_DOT, KC_0
 		)
