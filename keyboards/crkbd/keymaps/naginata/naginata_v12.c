@@ -760,14 +760,14 @@ void LRkey_checker(uint16_t keycode) {
 		switch(keycode){
 		  case NG_SHFT:
 			if(!ng_lkey_pressed){
-				samehand_shft_l = true;
+				samehand_shft_r = true;
 			  ng_lkey_pressed =false;
 			}
 		  break;
 
 		  case NG_SHFT2:
 			if(!ng_rkey_pressed){
-				samehand_shft_r = true;
+				samehand_shft_l = true;
 			  ng_rkey_pressed =false;
 			}
 		  break;
@@ -777,12 +777,12 @@ void LRkey_checker(uint16_t keycode) {
 		  case NG_Z ... NG_B:
 		  case NG_RIGHT:
 		  	  ng_lkey_pressed = true;
-		  	samehand_shft_l = false;
+		  	samehand_shft_r = false;
 		  break;
 
 		  default:
 			  ng_rkey_pressed = true;
-			  samehand_shft_r = false;
+			  samehand_shft_l = false;
 		  break;
 		}
 }
@@ -1151,7 +1151,7 @@ bool naginata_lookup(int nt, bool shifted) {
   }
 
   //trp3l  同手シフトでの特殊動作を定義
-  if(samehand_shft_r){                //left hand
+  if(samehand_shft_l){                //left hand
      switch (keycomb_buf){
     case B_SHFT|B_Q:
 		SEND_STRING(SS_LCTL("x"));
@@ -1194,7 +1194,7 @@ bool naginata_lookup(int nt, bool shifted) {
 		return true;
 		break;
     }
-  }else if(samehand_shft_l){ //right hand
+  }else if(samehand_shft_r){ //right hand
 	switch (keycomb_buf){
 	  case B_SHFT|B_I:
 	  	  SEND_STRING("tu");
