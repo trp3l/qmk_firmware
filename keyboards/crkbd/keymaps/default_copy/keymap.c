@@ -8,23 +8,51 @@ extern rgblight_config_t rgblight_config;
 
 extern uint8_t is_master;
 
+
+// 薙刀式
+#include "naginata.h"
+NGKEYS naginata_keys;
+// 薙刀式
+
 // Each layer gets a name for readability, which is then used in the keymap matrix below.
 // The underscores don't mean anything - you can have a layer called STUFF or any other name.
 // Layer names don't all need to be of the same length, obviously, and you can also skip them
 // entirely and just use numbers.
-#define _QWERTY 0
-#define _LOWER 1
-#define _RAISE 2
-#define _ADJUST 3
 
+
+// 薙刀式
+/*#define _QWERTY 0
+#define _NAGINATA 1, // 薙刀式入力レイヤー
+#define _LOWER 2
+#define _RAISE 3
+#define _ADJUST 4*/
+
+//もしくは
+
+enum keymap_layers {
+  _QWERTY,
+  _NAGINATA, // 薙刀式入力レイヤー
+  _LOWER,
+  _RAISE,
+  _ADJUST,
+}; //意味は同じ。
+// 薙刀式
+
+// 薙刀式
 enum custom_keycodes {
-  QWERTY = SAFE_RANGE,
+  QWERTY = NG_SAFE_RANGE,//SAFE_RANGE,
   LOWER,
   RAISE,
   ADJUST,
   BACKLIT,
-  RGBRST
+  RGBRST,
+
+  EISU,
+  KANA2,
+  LCTOGL, // Macのライブ変換対応オンオフ
 };
+// 薙刀式
+
 
 enum macro_keycodes {
   KC_SAMPLEMACRO,
@@ -78,7 +106,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //|--------+--------+--------+--------+--------+--------+--------|  |--------+--------+--------+--------+--------+--------+--------|
                                           KC_LGUI,   LOWER,  KC_SPC,     KC_ENT,   RAISE, KC_RALT \
                                       //`--------------------------'  `--------------------------'
-  )
+  ),
+  //薙刀式
+  [_NAGINATA] = LAYOUT(
+    _______,NG_Q   ,NG_W   ,NG_E   ,NG_R   ,NG_T   ,                NG_Y   ,NG_U   ,NG_I   ,NG_O   ,NG_P   ,_______, \
+    _______,NG_A   ,NG_S   ,NG_D   ,NG_F   ,NG_G   ,                NG_H   ,NG_J   ,NG_K   ,NG_L   ,NG_SCLN,_______, \
+    _______,NG_Z   ,NG_X   ,NG_C   ,NG_V   ,NG_B   ,                NG_N   ,NG_M   ,NG_COMM,NG_DOT ,NG_SLSH,_______, \
+                                    _______,NG_SHFT,_______,_______,NG_SHFT,_______
+  ),
+  //薙刀式
 };
 
 int RGB_current_mode;
@@ -98,6 +134,19 @@ void update_tri_layer_RGB(uint8_t layer1, uint8_t layer2, uint8_t layer3) {
 }
 
 void matrix_init_user(void) {
+	// 薙刀式
+	  uint16_t ngonkeys[] = {KC_H, KC_J};
+	  uint16_t ngoffkeys[] = {KC_F, KC_G};
+	  set_naginata(_NAGINATA, ngonkeys, ngoffkeys);
+
+	  #ifdef NAGINATA_EDIT_MAC
+	  set_unicode_input_mode(UC_OSX);
+	  #endif
+	  #ifdef NAGINATA_EDIT_WIN
+	  set_unicode_input_mode(UC_WINC);
+	  #endif
+	  // 薙刀式
+
     #ifdef RGBLIGHT_ENABLE
       RGB_current_mode = rgblight_config.mode;
     #endif
@@ -212,6 +261,25 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         }
       #endif
       break;
+      // 薙刀式
+    case EISU:
+          if (record->event.pressed) {
+            naginata_off();
+          }
+          return false;
+          break;
+        case KANA2:
+          if (record->event.pressed) {
+            naginata_on();
+          }
+          return false;
+          break;
+      // 薙刀式
   }
+
+  // 薙刀式
+      if (!process_naginata(keycode, record))
+        return false;
+    // 薙刀式
   return true;
 }
