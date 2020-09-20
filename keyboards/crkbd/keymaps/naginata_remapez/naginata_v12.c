@@ -160,8 +160,7 @@ typedef struct {
   uint32_t key;
   char kana[25];
 } naginata_keymap_ime;
-#define remapez
-
+//remapez
 #ifdef remapez
 //remapez カナのリマップがより簡単にできるようになりました。
 //「き」と「は」を入れ替えたい場合はKANA_KIをKANA_HAに、KANA_HAをKANA_KIにしてください。
@@ -541,8 +540,9 @@ const PROGMEM naginata_keymap ngmap[] = {
   {.key = B_U               , .kana = SS_TAP(X_BSPACE)},
   {.key = B_T               , .kana = SS_TAP(NGLT)},
   {.key = B_Y               , .kana = SS_TAP(NGRT)},
-  //remapez
+
 #else
+ //remapez ここまで
 const PROGMEM naginata_keymap ngmap[] = {
   // 清音
   {.key = B_J                      , .kana = "a"       }, // あ
@@ -831,7 +831,11 @@ const PROGMEM naginata_keymap ngmap[] = {
   {.key = B_U               , .kana = SS_TAP(X_BSPACE)},
   {.key = B_T               , .kana = SS_TAP(NGLT)},
   {.key = B_Y               , .kana = SS_TAP(NGRT)},
+
+//remapez
 #endif
+//remapez
+
   // enter
   {.key = B_V|B_M           , .kana = SS_TAP(X_ENTER)},
   // enter+シフト(連続シフト)
