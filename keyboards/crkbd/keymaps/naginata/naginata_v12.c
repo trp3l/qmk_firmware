@@ -178,7 +178,7 @@ typedef struct {
 
 
 //remapez カナのリマップがより簡単にできるようになりました。
-//「き」と「は」を入れ替えたい場合はKANA_KIをKANA_HAに、KANA_HAをKANA_KIにしてください。
+//「き」と「は」を入れ替えたい場合はKANA_KIとKANA_HAが対象です。
 #define KOGAKI  B_Q
 #define KANA_KI B_W
 #define KANA_TE B_E
@@ -257,9 +257,11 @@ typedef struct {
 
 
 //D濁点の左右判定
-#define LEFT_KEY  0b11000001111100000111110000011111
-#define DAK(seion) (((seion|LEFT_KEY)& ~LEFT_KEY) > 0 ? ((DAK_L|seion)& ~B_SHFT) : ((DAK_R|seion)& ~B_SHFT))
-#define HAN(seion) (((seion|LEFT_KEY)& ~LEFT_KEY) > 0 ? ((HAN_L|seion)& ~B_SHFT) : ((HAN_R|seion)& ~B_SHFT))
+const uint32_t LEFT_KEY = B_Q|B_W|B_E|B_R|B_T|
+        				  B_A|B_S|B_D|B_F|B_G|
+						  B_Z|B_X|B_C|B_V|B_B;
+#define DAK(seion) ((seion & LEFT_KEY) <= 0 ? ((DAK_L|seion)& ~B_SHFT) : ((DAK_R|seion)& ~B_SHFT))
+#define HAN(seion) ((seion & LEFT_KEY) <= 0 ? ((HAN_L|seion)& ~B_SHFT) : ((HAN_R|seion)& ~B_SHFT))
 
 const PROGMEM naginata_keymap ngmap[] = {
   // 清音
