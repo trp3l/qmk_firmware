@@ -1231,10 +1231,11 @@ bool naginata_lookup(int nt, bool shifted) {
 #ifdef SAMEHAND_SHFT
 #define NG_LSHFT NG_SHFT2
 #define NG_RSHFT NG_SHFT
-  //Lシフトを押していて、かつキーコード中に左手のキーが含まれる場合に同手シフトを起動する。
-  //L左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
-if((ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || lastpressed_code_is_samehand_shft_L)
-	&& (keycomb_buf & LEFT_KEY) > 0){
+  //キーコードに左手のキーが含まれている & Lシフトを押している場合に同手シフトを起動する。
+  //連続シフト中などで、Lシフトより先にRシフトを押していた場合は起動しない。
+  //左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
+if( ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
+   (ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || lastpressed_code_is_samehand_shft_L) ){
 
 	switch (keycomb_buf){
 	case B_SHFT|B_Q:
@@ -1252,6 +1253,9 @@ if((ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || lastpressed_code_is_samehand
 	case B_SHFT|B_D:
 		SEND_STRING(SS_LCTL("y"));
 		break;
+	case B_SHFT|B_G:
+		SEND_STRING(SS_LCTL("f"));
+		break;
 	case B_SHFT|B_C:
 		SEND_STRING(SS_LCTL("v"));
 		break;
@@ -1267,8 +1271,8 @@ if((ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || lastpressed_code_is_samehand
 	compress_buffer(nt);
 	return true;
 //Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
-}else if((ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || lastpressed_code_is_samehand_shft_R)
-		&&(keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0){
+}else if( ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
+		 (ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || lastpressed_code_is_samehand_shft_R) ){
 
 	switch (keycomb_buf){
 	case B_SHFT|B_I:
