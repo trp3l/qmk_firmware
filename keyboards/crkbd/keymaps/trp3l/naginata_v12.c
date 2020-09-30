@@ -257,9 +257,9 @@ typedef struct {
 
 
 //D濁点の左右判定
-const uint32_t LEFT_KEY = B_Q|B_W|B_E|B_R|B_T|
-        				  B_A|B_S|B_D|B_F|B_G|
-						  B_Z|B_X|B_C|B_V|B_B;
+static const uint32_t LEFT_KEY = B_Q|B_W|B_E|B_R|B_T|
+								 B_A|B_S|B_D|B_F|B_G|
+								 B_Z|B_X|B_C|B_V|B_B;
 #define DAK(seion) ((seion & LEFT_KEY) <= 0 ? ((DAK_L|seion)& ~B_SHFT) : ((DAK_R|seion)& ~B_SHFT))
 #define HAN(seion) ((seion & LEFT_KEY) <= 0 ? ((HAN_L|seion)& ~B_SHFT) : ((HAN_R|seion)& ~B_SHFT))
 
@@ -840,48 +840,15 @@ const uint16_t ng_elem_counti = sizeof ngmapi  / sizeof ngmapi[0];
 
 
 //同手シフト拡張パッケージ
-static bool ng_lkey_pressed = false;
-static bool ng_rkey_pressed = false;
-static bool samehand_shft_l = false;
-static bool samehand_shft_r = false;
-
-void LRkey_checker(uint16_t keycode) {
-		switch(keycode){
-		  case NG_SHFT:
-			if(!ng_lkey_pressed){
-				samehand_shft_r = true;
-			  ng_lkey_pressed =false;
-			}
-		  break;
-
-		  case NG_SHFT2:
-			if(!ng_rkey_pressed){
-				samehand_shft_l = true;
-			  ng_rkey_pressed =false;
-			}
-		  break;
-//
-		  case NG_Q ... NG_T:
-		  case NG_A ... NG_G:
-		  case NG_Z ... NG_B:
-		  case NG_RIGHT:
-		  	  ng_lkey_pressed = true;
-		  	samehand_shft_r = false;
-		  break;
-
-		  default:
-			  ng_rkey_pressed = true;
-			  samehand_shft_l = false;
-		  break;
-		}
-}
+#ifdef SAMEHAND_SHFT
+static bool lastpressed_code_is_samehand_shft_L = false;
+static bool lastpressed_code_is_samehand_shft_R = false;
 void LR_buf_clear(void){
-	ng_lkey_pressed = false;
-	ng_rkey_pressed = false;
-	samehand_shft_l = false;
-	samehand_shft_r = false;
+	lastpressed_code_is_samehand_shft_L = false;
+	lastpressed_code_is_samehand_shft_R = false;
 }
-//trp3l
+#endif
+//_trp3l
 /*
 void set_naginata(uint8_t ng_layer, uint16_t *onk, uint16_t *offk) {
   naginata_layer = ng_layer;
@@ -976,7 +943,9 @@ void naginata_clear(void) {
   }
   ng_chrcount = 0;
   //trp3l
+#ifdef SAMEHAND_SHFT
   LR_buf_clear();
+#endif
   //trp3l
 }
 
@@ -992,10 +961,6 @@ void compress_buffer(int n) {
     }
   }
   ng_chrcount -= n;
-  //trp3l  ここが真のキーをすべて離した場所。
-  if(ninputs[0] == 0)
-	  LR_buf_clear();
-  //trp3l
 }
 
 #ifdef MAC_LIVE_CONVERSION
@@ -1187,7 +1152,16 @@ bool process_naginata(uint16_t keycode, keyrecord_t *record) {
     case NG_Q ... NG_SHFT2:
         // どれかキーを離したら処理を開始する
         keycomb &= ~ng_key[keycode - NG_Q]; // キーの重ね合わせ
-        if (ng_chrcount > 0) naginata_type();
+        if (ng_chrcount > 0){
+        	naginata_type();
+        }
+        //trp3l  ここが真のキーをすべて離した場所。
+        else{
+		#ifdef SAMEHAND_SHFT
+        	LR_buf_clear();
+		#endif
+        }
+        //trp3l
         return false;
         break;
     }
@@ -1223,7 +1197,7 @@ bool naginata_lookup(int nt, bool shifted) {
   for (int i = 0; i < nt; i++) {
     keycomb_buf |= ng_key[ninputs[i] - NG_Q];
 //trp3l
-    LRkey_checker(ninputs[i]);
+//    LRkey_checker(ninputs[i]);
 //_trp3l
   }
   // NG_SHFT2はスペースの代わりにエンターを入力する
@@ -1252,74 +1226,71 @@ bool naginata_lookup(int nt, bool shifted) {
     if ((keycomb & B_J) == B_J) keycomb_buf |= B_J;
     if ((keycomb & B_V) == B_V) keycomb_buf |= B_V;
     if ((keycomb & B_M) == B_M) keycomb_buf |= B_M;
-//trp3l 自作 ctrl + OOシリーズ
-    //if ((keycomb & B_A) == B_A) keycomb_buf |= B_A;
-//_trp3l
   }
+//trp3l 同手シフト用
+#ifdef SAMEHAND_SHFT
+#define NG_LSHFT NG_SHFT2
+#define NG_RSHFT NG_SHFT
+  //Lシフトを押していて、かつキーコード中に左手のキーが含まれる場合に同手シフトを起動する。
+  //L左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
+if((ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || lastpressed_code_is_samehand_shft_L)
+	&& (keycomb_buf & LEFT_KEY) > 0){
 
-  //trp3l  同手シフトでの特殊動作を定義
-  if(samehand_shft_l){                //left hand
-     switch (keycomb_buf){
-    case B_SHFT|B_Q:
+	switch (keycomb_buf){
+	case B_SHFT|B_Q:
 		SEND_STRING(SS_LCTL("a"));
-		    compress_buffer(nt);
-			return true;
-			break;
-    case B_SHFT|B_R:
-			SEND_STRING(SS_LCTL("d"));
-			compress_buffer(nt);
-			return true;
-			break;
+		break;
+	case B_SHFT|B_R:
+		SEND_STRING(SS_LCTL("d"));
+		break;
 	case B_SHFT|B_A:
 		SEND_STRING(SS_LCTL("s"));
-		compress_buffer(nt);
-		return true;
 		break;
 	case B_SHFT|B_S:
 		SEND_STRING(SS_LCTL("z"));
-		compress_buffer(nt);
-		return true;
 		break;
 	case B_SHFT|B_D:
 		SEND_STRING(SS_LCTL("y"));
-		compress_buffer(nt);
-		return true;
 		break;
 	case B_SHFT|B_C:
 		SEND_STRING(SS_LCTL("v"));
-		compress_buffer(nt);
-		return true;
 		break;
 	case B_SHFT|B_V:
 		SEND_STRING(SS_LCTL("c"));
-		compress_buffer(nt);
-		return true;
 		break;
 	case B_SHFT|B_B:
 		SEND_STRING(SS_LCTL("x"));
-		compress_buffer(nt);
-		return true;
 		break;
-    }
-  }else if(samehand_shft_r){ //right hand
-	switch (keycomb_buf){
-	  case B_SHFT|B_I:
-	  	  SEND_STRING("tu");
-	  	  compress_buffer(nt);
-	  	  return true;
-	  break;
-	  case B_SHFT|B_L:
-	  	  SEND_STRING("ra");
-	  	  compress_buffer(nt);
-	  	  return true;
-	  break;
-	  case B_SHFT|B_SCLN:
-	  	  SEND_STRING("re");
-	  	  compress_buffer(nt);
-	  	  return true;
 	}
-  }
-  //trp3l
+	lastpressed_code_is_samehand_shft_R = false;
+	lastpressed_code_is_samehand_shft_L = true;
+	compress_buffer(nt);
+	return true;
+//Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
+}else if((ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || lastpressed_code_is_samehand_shft_R)
+		&&(keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0){
+
+	switch (keycomb_buf){
+	case B_SHFT|B_I:
+		SEND_STRING("tu");
+		break;
+	case B_SHFT|B_L:
+		SEND_STRING("ra");
+		break;
+	case B_SHFT|B_SCLN:
+		SEND_STRING("re");
+		break;
+	}
+	lastpressed_code_is_samehand_shft_L = false;
+	lastpressed_code_is_samehand_shft_R = true;
+	compress_buffer(nt);
+	return true;
+}else{
+
+	LR_buf_clear();
+}
+#endif
+//_trp3l
   switch (keycomb_buf) {
     // send_stringできないキー、長すぎるマクロはここで定義
 //trp3l
@@ -1387,18 +1358,6 @@ bool naginata_lookup(int nt, bool shifted) {
       compress_buffer(nt);
       return true;
       break;
-
-/*    case B_J|B_K|B_D:// wheel up
-		for (int i = 0; i < 3; i++) tap_code(KC_MS_WH_UP);
-	    compress_buffer(nt);
-		return true;
-		break;
-
-    case B_J|B_K|B_F: // wheel down
-		for (int i = 0; i < 3; i++) tap_code(KC_MS_WH_DOWN);
-	    compress_buffer(nt);
-		return true;
-		break;*/
 #endif
 #ifdef NAGINATA_EDIT_MAC
     case B_C|B_V|B_P: // ここから末までふりがな定義

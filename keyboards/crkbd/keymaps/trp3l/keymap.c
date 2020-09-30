@@ -269,7 +269,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 			   if(SLP_pressed && !modifier_pressed && TIMER_DIFF_16(record->event.time, SLP_timer) < 300){
 				   layer_off(_S_CUT);
 				   naginata_on();
-				   tap_code(KC_SLEP);
 			   }
 			   SLP_pressed = false;
 			   SLP_timer = 0;
