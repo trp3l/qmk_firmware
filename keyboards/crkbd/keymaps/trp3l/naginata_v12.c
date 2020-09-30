@@ -41,7 +41,7 @@
   #define NGRT X_DOWN
   #define NGKUP KC_LEFT
   #define NGKDN KC_RIGHT
-  #define NGKLT KC_UP
+  #definee KC_UP
   #define NGKRT KC_DOWN
 #endif
 
@@ -56,9 +56,6 @@ static uint16_t ngoff_keys[2]; // 薙刀式をオフにするキー(通常FG)
 static uint8_t s_cut_layer = 0;
 static uint16_t s_on_keys[2];
 static uint16_t s_off_keys[2];
-//LRカーソルキーの拡張
-static bool arrow_pressed = false;
-static uint16_t arrow_timer = 0;
 //trp3l
 
 // 31キーを32bitの各ビットに割り当てる
@@ -144,11 +141,6 @@ const uint32_t ng_key[] = {
 
   [NG_SHFT - NG_Q] = B_SHFT,
   [NG_SHFT2 - NG_Q] = B_SHFT,
-
-  //trp3l
-  [NG_RIGHT - NG_Q] = B_T,
-  [NG_LEFT - NG_Q] = B_Y,
-//trp3l
 };
 
 // カナ変換テーブル
@@ -841,11 +833,220 @@ const uint16_t ng_elem_counti = sizeof ngmapi  / sizeof ngmapi[0];
 
 //同手シフト拡張パッケージ
 #ifdef SAMEHAND_SHFT
-static bool lastpressed_code_is_samehand_shft_L = false;
-static bool lastpressed_code_is_samehand_shft_R = false;
-void LR_buf_clear(void){
-	lastpressed_code_is_samehand_shft_L = false;
-	lastpressed_code_is_samehand_shft_R = false;
+
+enum samehand_statuses{
+	NO_SFT,
+	L_SHSFT,
+	R_SHSFT,
+};
+uint8_t samehand_status = 0;
+
+#define NG_LSHFT NG_SHFT2
+#define NG_RSHFT NG_SHFT
+bool samehand_shft(int nt, uint32_t keycomb_buf){
+  //キーコードに左手のキーが含まれている & Lシフトを押している場合に同手シフトを起動する。
+  //連続シフト中などで、Lシフトより先にRシフトを押していた場合は起動しない。
+  //左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
+if( (keycomb_buf & B_SHFT) == B_SHFT && ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
+   (ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || samehand_status == L_SHSFT) ){
+
+	switch (keycomb_buf){
+	case B_SHFT|B_Q:
+		SEND_STRING(SS_LCTL("a"));
+		break;
+	case B_SHFT|B_R:
+		SEND_STRING(SS_LCTL("d"));
+		break;
+	case B_SHFT|B_A:
+		SEND_STRING(SS_LCTL("s"));
+		break;
+	case B_SHFT|B_S:
+		SEND_STRING(SS_LCTL("z"));
+		break;
+	case B_SHFT|B_D:
+		SEND_STRING(SS_LCTL("y"));
+		break;
+	case B_SHFT|B_G:
+		SEND_STRING(SS_LCTL("f"));
+		break;
+	case B_SHFT|B_C:
+		SEND_STRING(SS_LCTL("v"));
+		break;
+	case B_SHFT|B_V:
+		SEND_STRING(SS_LCTL("c"));
+		break;
+	case B_SHFT|B_B:
+		SEND_STRING(SS_LCTL("x"));
+		break;
+	}
+	samehand_status = L_SHSFT;
+	compress_buffer(nt);
+	return true;
+//Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
+}else if( (keycomb_buf & B_SHFT)==B_SHFT && ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
+		 (ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || samehand_status == R_SHSFT) ){
+
+	switch (keycomb_buf){
+	case B_SHFT|B_I:
+		SEND_STRING("tu");
+		break;
+	case B_SHFT|B_L:
+		SEND_STRING("ra");
+		break;
+	case B_SHFT|B_SCLN:
+		SEND_STRING("re");
+		break;
+	}
+	samehand_status = R_SHSFT;
+	compress_buffer(nt);
+	return true;
+}else{
+	samehand_status = NO_SFT;
+	return false;
+}
+}
+#endif
+
+//BS,カーソルのオートリピート機能
+#ifdef NG_AUTO_REPEAT
+static uint16_t auto_repeat_timer = 1;//0sではないことに注意。
+static uint16_t prev_keycode = 0;
+
+bool auto_repeat_keycode(uint16_t keycode, keyrecord_t *record){
+	if(record->event.pressed){
+		if(TIMER_DIFF_16(record->event.time, auto_repeat_timer) < 100 && prev_keycode == keycode){
+			switch(keycode){
+
+			case NG_T:
+				if((keycomb & B_SHFT) == B_SHFT){
+					SEND_STRING(SS_DOWN(X_LSFT));
+				}
+				SEND_STRING(SS_DOWN(NGRT));
+				break;
+
+			case NG_Y:
+				if((keycomb & B_SHFT) == B_SHFT){
+					SEND_STRING(SS_DOWN(X_LSFT));
+				}
+				SEND_STRING(SS_DOWN(NGLT));
+				break;
+
+			case NG_J:
+				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
+					SEND_STRING(SS_DOWN(NGUP));
+				}else{
+					return false;
+				}
+				break;
+
+			case NG_M:
+				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
+					SEND_STRING(SS_DOWN(NGDN));
+				}else{
+					return false;
+				}
+				break;
+
+			case NG_K:
+				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
+					SEND_STRING(SS_DOWN(X_LSFT));
+					SEND_STRING(SS_DOWN(NGUP));
+				}else{
+					return false;
+				}
+				break;
+
+			case NG_COMM:
+				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
+					SEND_STRING(SS_DOWN(X_LSFT));
+					SEND_STRING(SS_DOWN(NGDN));
+				}else{
+					return false;
+				}
+				break;
+
+			case NG_U:
+				SEND_STRING(SS_DOWN(X_BSPACE));
+				break;
+			}
+			auto_repeat_timer = 0;
+			return true;
+		}else{//時間切れ or 連続入力ではない。
+			return false;
+		}
+	}else{//key release
+		if(auto_repeat_timer == 0){//auto repeate 開始時にtimerをリセットしている。
+			switch(keycode){
+
+			case NG_T:
+				SEND_STRING(SS_UP(NGRT));
+				SEND_STRING(SS_UP(X_LSFT));
+				break;
+
+			case NG_Y:
+				SEND_STRING(SS_UP(NGLT));
+				SEND_STRING(SS_UP(X_LSFT));
+				break;
+
+			case NG_J:
+				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
+					SEND_STRING(SS_UP(NGUP));
+				}else{
+					auto_repeat_timer = record->event.time;
+					prev_keycode = keycode;
+					return false;
+				}
+				break;
+
+			case NG_M:
+				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
+					SEND_STRING(SS_UP(NGDN));
+				}else{
+					auto_repeat_timer = record->event.time;
+					prev_keycode = keycode;
+					return false;
+				}
+				break;
+			case NG_K:
+				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
+					SEND_STRING(SS_UP(X_LSFT));
+					SEND_STRING(SS_UP(NGUP));
+				}else{
+					auto_repeat_timer = record->event.time;
+					prev_keycode = keycode;
+					return false;
+				}
+				break;
+
+			case NG_COMM:
+				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
+					SEND_STRING(SS_UP(X_LSFT));
+					SEND_STRING(SS_UP(NGDN));
+				}else{
+					auto_repeat_timer = record->event.time;
+					prev_keycode = keycode;
+					return false;
+				}
+				break;
+
+			case NG_U:
+				SEND_STRING(SS_UP(X_BSPACE));
+				break;
+
+			default:
+				auto_repeat_timer = record->event.time;
+				prev_keycode = keycode;
+				return false;
+			}
+			auto_repeat_timer = record->event.time;
+			prev_keycode = keycode;
+			return true;
+		}else{
+			auto_repeat_timer = record->event.time;
+			prev_keycode = keycode;
+			return false;
+		}
+	}
 }
 #endif
 //_trp3l
@@ -942,11 +1143,6 @@ void naginata_clear(void) {
     ninputs[i] = 0;
   }
   ng_chrcount = 0;
-  //trp3l
-#ifdef SAMEHAND_SHFT
-  LR_buf_clear();
-#endif
-  //trp3l
 }
 
 // バッファから先頭n文字を削除する
@@ -1098,24 +1294,13 @@ bool process_naginata(uint16_t keycode, keyrecord_t *record) {
   if (process_modifier(keycode, record))
     return true;
 
+#ifdef NG_AUTO_REPEAT
+  if (auto_repeat_keycode(keycode, record))
+	return true;
+#endif
 
   if (record->event.pressed) {
     switch (keycode) {
-
-      case NG_RIGHT:
-       if(arrow_pressed && TIMER_DIFF_16(record->event.time, arrow_timer) < 100 && !((keycomb & B_SHFT) == B_SHFT)){
-    	   SEND_STRING(SS_DOWN(X_RIGHT));
-		  return false;
-		  break;
-       }
-		case NG_LEFT:
-		if(arrow_pressed && TIMER_DIFF_16(record->event.time, arrow_timer) < 100 && !((keycomb & B_SHFT) == B_SHFT)){
-	       SEND_STRING(SS_DOWN(X_LEFT));
-		  return false;
-		  break;
-		}else if(arrow_pressed){
-			arrow_pressed = false;
-		}
 	  case NG_Q ... NG_SHFT2:
         ninputs[ng_chrcount] = keycode; // キー入力をバッファに貯める
         ng_chrcount++;
@@ -1129,26 +1314,6 @@ bool process_naginata(uint16_t keycode, keyrecord_t *record) {
     }
   } else { // key release
     switch (keycode) {
-
-    case NG_RIGHT:
-           if(arrow_pressed){
-     		    arrow_timer = 0;
-     		    arrow_pressed = false;
-         	   SEND_STRING(SS_UP(X_RIGHT));
-               return false;
-               break;
-           }
-     case NG_LEFT:
-        if(arrow_pressed){
-   			  arrow_timer = 0;
-   			  arrow_pressed = false;
-       	   SEND_STRING(SS_UP(X_LEFT));
-   			  return false;
-   		      break;
-   		}
-        arrow_pressed = true;
-   		arrow_timer = record->event.time;
-
     case NG_Q ... NG_SHFT2:
         // どれかキーを離したら処理を開始する
         keycomb &= ~ng_key[keycode - NG_Q]; // キーの重ね合わせ
@@ -1157,9 +1322,6 @@ bool process_naginata(uint16_t keycode, keyrecord_t *record) {
         }
         //trp3l  ここが真のキーをすべて離した場所。
         else{
-		#ifdef SAMEHAND_SHFT
-        	LR_buf_clear();
-		#endif
         }
         //trp3l
         return false;
@@ -1196,9 +1358,6 @@ bool naginata_lookup(int nt, bool shifted) {
   // バッファ内のキーを組み合わせる
   for (int i = 0; i < nt; i++) {
     keycomb_buf |= ng_key[ninputs[i] - NG_Q];
-//trp3l
-//    LRkey_checker(ninputs[i]);
-//_trp3l
   }
   // NG_SHFT2はスペースの代わりにエンターを入力する
   if (keycomb_buf == B_SHFT && ninputs[0] == NG_SHFT2) {
@@ -1227,72 +1386,10 @@ bool naginata_lookup(int nt, bool shifted) {
     if ((keycomb & B_V) == B_V) keycomb_buf |= B_V;
     if ((keycomb & B_M) == B_M) keycomb_buf |= B_M;
   }
+
 //trp3l 同手シフト用
 #ifdef SAMEHAND_SHFT
-#define NG_LSHFT NG_SHFT2
-#define NG_RSHFT NG_SHFT
-  //キーコードに左手のキーが含まれている & Lシフトを押している場合に同手シフトを起動する。
-  //連続シフト中などで、Lシフトより先にRシフトを押していた場合は起動しない。
-  //左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
-if( ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
-   (ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || lastpressed_code_is_samehand_shft_L) ){
-
-	switch (keycomb_buf){
-	case B_SHFT|B_Q:
-		SEND_STRING(SS_LCTL("a"));
-		break;
-	case B_SHFT|B_R:
-		SEND_STRING(SS_LCTL("d"));
-		break;
-	case B_SHFT|B_A:
-		SEND_STRING(SS_LCTL("s"));
-		break;
-	case B_SHFT|B_S:
-		SEND_STRING(SS_LCTL("z"));
-		break;
-	case B_SHFT|B_D:
-		SEND_STRING(SS_LCTL("y"));
-		break;
-	case B_SHFT|B_G:
-		SEND_STRING(SS_LCTL("f"));
-		break;
-	case B_SHFT|B_C:
-		SEND_STRING(SS_LCTL("v"));
-		break;
-	case B_SHFT|B_V:
-		SEND_STRING(SS_LCTL("c"));
-		break;
-	case B_SHFT|B_B:
-		SEND_STRING(SS_LCTL("x"));
-		break;
-	}
-	lastpressed_code_is_samehand_shft_R = false;
-	lastpressed_code_is_samehand_shft_L = true;
-	compress_buffer(nt);
-	return true;
-//Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
-}else if( ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
-		 (ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || lastpressed_code_is_samehand_shft_R) ){
-
-	switch (keycomb_buf){
-	case B_SHFT|B_I:
-		SEND_STRING("tu");
-		break;
-	case B_SHFT|B_L:
-		SEND_STRING("ra");
-		break;
-	case B_SHFT|B_SCLN:
-		SEND_STRING("re");
-		break;
-	}
-	lastpressed_code_is_samehand_shft_L = false;
-	lastpressed_code_is_samehand_shft_R = true;
-	compress_buffer(nt);
-	return true;
-}else{
-
-	LR_buf_clear();
-}
+  	  if( samehand_shft(nt, keycomb_buf) ) return true;
 #endif
 //_trp3l
   switch (keycomb_buf) {

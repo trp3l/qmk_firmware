@@ -101,10 +101,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 	[_NAGINATA] = LAYOUT(
-		_______ ,NG_Q,	   NG_W,	NG_E,	NG_R,	  NG_RIGHT,  NG_LEFT,    NG_U,    NG_I,    NG_O,    NG_P,    _______,
+		_______ ,NG_Q,	   NG_W,	NG_E,	NG_R,	  NG_T,  		NG_Y,    NG_U,    NG_I,    NG_O,    NG_P,    _______,
 		_______ ,NG_A,	   NG_S,	NG_D,	NG_F,	  NG_G, 		NG_H,    NG_J,    NG_K,    NG_L,    NG_SCLN, _______,
 		_______ ,NG_Z,	   NG_X,	NG_C,	NG_V,	  NG_B, 		NG_N,    NG_M,    NG_COMM, NG_DOT,  NG_SLSH, RGUI_T(KC_SLEP),
-								  _______, NG_SHFT2,  LT_TAB, 	   LT_ENTER, NG_SHFT, _______
+							   _______, 	NG_SHFT2,  LT_TAB, 	   LT_ENTER, NG_SHFT, _______
 		),
 
 
