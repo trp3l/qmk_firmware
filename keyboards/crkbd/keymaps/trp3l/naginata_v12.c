@@ -833,6 +833,22 @@ const uint16_t ng_elem_counti = sizeof ngmapi  / sizeof ngmapi[0];
 
 //同手シフト拡張パッケージ
 #ifdef SAMEHAND_SHFT
+const PROGMEM naginata_keymap ngmaps[] = {//通常のかな等と同じ定義で実装できます。
+	{.key = B_SHFT|B_Q       , .kana = SS_LCTL("a")},
+	{.key = B_SHFT|B_R       , .kana = SS_LCTL("d")},
+	{.key = B_SHFT|B_A       , .kana = SS_LCTL("s")},
+	{.key = B_SHFT|B_S       , .kana = SS_LCTL("z")},
+	{.key = B_SHFT|B_D       , .kana = SS_LCTL("y")},
+	{.key = B_SHFT|B_G       , .kana = SS_LCTL("f")},
+	{.key = B_SHFT|B_C       , .kana = SS_LCTL("v")},
+	{.key = B_SHFT|B_V       , .kana = SS_LCTL("c")},
+	{.key = B_SHFT|B_B       , .kana = SS_LCTL("x")},
+
+	{.key = B_SHFT|B_I       , .kana = "tu"        },
+	{.key = B_SHFT|B_L       , .kana = "ra"        },
+	{.key = B_SHFT|B_SCLN    , .kana = "re"        },
+};
+const uint16_t ng_elem_counts  = sizeof ngmaps   / sizeof ngmaps[0];
 
 enum samehand_statuses{
 	NO_SFT,
@@ -846,66 +862,45 @@ static uint8_t samehand_status = 0;
 
 
 bool samehand_shft(int nt, uint32_t keycomb_buf){
-  //キーコードに左手のキーが含まれている & Lシフトを押している場合に同手シフトを起動する。
-  //連続シフト中などで、Lシフトより先にRシフトを押していた場合は起動しない。
-  //左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
-if( (keycomb_buf & B_SHFT) == B_SHFT && ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
-   (ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || samehand_status == L_SHSFT) ){
+	naginata_keymap bngmap; // PROGMEM buffer
+	if((keycomb_buf & B_SHFT) != B_SHFT) return false;
 
-	switch (keycomb_buf){
-	case B_SHFT|B_Q:
-		SEND_STRING(SS_LCTL("a"));
-		break;
-	case B_SHFT|B_R:
-		SEND_STRING(SS_LCTL("d"));
-		break;
-	case B_SHFT|B_A:
-		SEND_STRING(SS_LCTL("s"));
-		break;
-	case B_SHFT|B_S:
-		SEND_STRING(SS_LCTL("z"));
-		break;
-	case B_SHFT|B_D:
-		SEND_STRING(SS_LCTL("y"));
-		break;
-	case B_SHFT|B_G:
-		SEND_STRING(SS_LCTL("f"));
-		break;
-	case B_SHFT|B_C:
-		SEND_STRING(SS_LCTL("v"));
-		break;
-	case B_SHFT|B_V:
-		SEND_STRING(SS_LCTL("c"));
-		break;
-	case B_SHFT|B_B:
-		SEND_STRING(SS_LCTL("x"));
-		break;
-	}
-	samehand_status = L_SHSFT;
-	compress_buffer(nt);
-	return true;
-//Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
-}else if( (keycomb_buf & B_SHFT)==B_SHFT && ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
-		 (ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || samehand_status == R_SHSFT) ){
+	  //キーコードに左手のキーが含まれている & Lシフトを押している場合に同手シフトを起動する。
+	  //連続シフト中などで、Lシフトより先にRシフトを押していた場合は起動しない。
+	  //左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
+	if( ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
+	   (ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || samehand_status == L_SHSFT) ){
 
-	switch (keycomb_buf){
-	case B_SHFT|B_I:
-		SEND_STRING("tu");
-		break;
-	case B_SHFT|B_L:
-		SEND_STRING("ra");
-		break;
-	case B_SHFT|B_SCLN:
-		SEND_STRING("re");
-		break;
+		for (int i = 0; i < ng_elem_counts; i++) {
+				memcpy_P(&bngmap, &ngmaps[i], sizeof(bngmap));
+				if (keycomb_buf == bngmap.key) {
+				  send_string(bngmap.kana);
+				  compress_buffer(nt);
+				  samehand_status = L_SHSFT;
+	  	  	  	  return true;
+				}
+			  }
+			samehand_status = L_SHSFT;
+	  return false;
+	  //Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
+	}else if( ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
+			 (ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || samehand_status == R_SHSFT) ){
+
+		for (int i = 0; i < ng_elem_counts; i++) {
+	        memcpy_P(&bngmap, &ngmaps[i], sizeof(bngmap));
+	        if (keycomb_buf == bngmap.key) {
+	          send_string(bngmap.kana);
+	          compress_buffer(nt);
+			  samehand_status = R_SHSFT;
+			  return true;
+	        }
+		 }
+		samehand_status = R_SHSFT;
+        return false;
+	}else{
+		samehand_status = NO_SFT;
+		return false;
 	}
-	samehand_status = R_SHSFT;
-	compress_buffer(nt);
-	return true;
-}else{
-	samehand_status = NO_SFT;
-	return false;
-}
 }
 #endif
 
