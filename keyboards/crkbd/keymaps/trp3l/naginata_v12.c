@@ -41,7 +41,7 @@
   #define NGRT X_DOWN
   #define NGKUP KC_LEFT
   #define NGKDN KC_RIGHT
-  #definee KC_UP
+  #define NGKLT KC_UP
   #define NGKRT KC_DOWN
 #endif
 
@@ -832,22 +832,77 @@ const uint16_t ng_elem_counti = sizeof ngmapi  / sizeof ngmapi[0];
 
 
 //同手シフト拡張パッケージ
-#ifdef SAMEHAND_SHFT
+//#ifdef SAMEHAND_SHFT
 
 enum samehand_statuses{
 	NO_SFT,
 	L_SHSFT,
 	R_SHSFT,
 };
-uint8_t samehand_status = 0;
+static uint8_t samehand_status = 0;
 
 #define NG_LSHFT NG_SHFT2
 #define NG_RSHFT NG_SHFT
+
+/*const PROGMEM naginata_keymap ngmaps[] = {
+	{.key = B_SHFT|B_Q       , .kana = SS_LCTL("a")},
+	{.key = B_SHFT|B_R       , .kana = SS_LCTL("d")},
+	{.key = B_SHFT|B_A       , .kana = SS_LCTL("s")},
+	{.key = B_SHFT|B_S       , .kana = SS_LCTL("z")},
+	{.key = B_SHFT|B_D       , .kana = SS_LCTL("y")},
+	{.key = B_SHFT|B_G       , .kana = SS_LCTL("f")},
+	{.key = B_SHFT|B_C       , .kana = SS_LCTL("v")},
+	{.key = B_SHFT|B_V       , .kana = SS_LCTL("c")},
+	{.key = B_SHFT|B_B       , .kana = SS_LCTL("x")},
+
+	{.key = B_SHFT|B_I       , .kana = "tu"        },
+	{.key = B_SHFT|B_L       , .kana = "ra"        },
+	{.key = B_SHFT|B_SCLN    , .kana = "re"        },
+};
+const uint16_t ng_elem_counts  = sizeof ngmaps   / sizeof ngmaps[0];
+
+
 bool samehand_shft(int nt, uint32_t keycomb_buf){
+	naginata_keymap bngmap; // PROGMEM buffer
+	if((keycomb_buf & B_SHFT) != B_SHFT) return false;
+
+
+	if( ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
+	   (ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || samehand_status == L_SHSFT) ){
+
+		for (int i = 0; i < ng_elem_counts; i++) {
+				memcpy_P(&bngmap, &ngmaps[i], sizeof(bngmap));
+				if (keycomb_buf == bngmap.key) {
+				  send_string(bngmap.kana);
+				  compress_buffer(nt);
+				}
+			samehand_status = L_SHSFT;
+			  }
+	  return true;
+
+	}else if( ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
+			 (ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || samehand_status == R_SHSFT) ){
+		for (int i = 0; i < ng_elem_counts; i++) {
+	        memcpy_P(&bngmap, &ngmaps[i], sizeof(bngmap));
+	        if (keycomb_buf == bngmap.key) {
+	          send_string(bngmap.kana);
+	          compress_buffer(nt);
+	        }
+		samehand_status = R_SHSFT;
+		 }
+        return true;
+	}else{
+		samehand_status = NO_SFT;
+		return false;
+	}
+}*/
+bool samehand_shft(int nt, uint32_t keycomb_buf){
+
+if( (keycomb_buf & B_SHFT) != B_SHFT ) return false;
   //キーコードに左手のキーが含まれている & Lシフトを押している場合に同手シフトを起動する。
   //連続シフト中などで、Lシフトより先にRシフトを押していた場合は起動しない。
   //左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
-if( (keycomb_buf & B_SHFT) == B_SHFT && ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
+if(ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
    (ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || samehand_status == L_SHSFT) ){
 
 	switch (keycomb_buf){
@@ -878,12 +933,15 @@ if( (keycomb_buf & B_SHFT) == B_SHFT && ninputs[0]!=NG_RSHFT && ((keycomb_buf & 
 	case B_SHFT|B_B:
 		SEND_STRING(SS_LCTL("x"));
 		break;
+	default:
+		samehand_status = L_SHSFT;
+		return false;
 	}
 	samehand_status = L_SHSFT;
 	compress_buffer(nt);
 	return true;
 //Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
-}else if( (keycomb_buf & B_SHFT)==B_SHFT && ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
+}else if(ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
 		 (ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || samehand_status == R_SHSFT) ){
 
 	switch (keycomb_buf){
@@ -896,6 +954,9 @@ if( (keycomb_buf & B_SHFT) == B_SHFT && ninputs[0]!=NG_RSHFT && ((keycomb_buf & 
 	case B_SHFT|B_SCLN:
 		SEND_STRING("re");
 		break;
+	default:
+		samehand_status = R_SHSFT;
+		return false;
 	}
 	samehand_status = R_SHSFT;
 	compress_buffer(nt);
@@ -905,7 +966,7 @@ if( (keycomb_buf & B_SHFT) == B_SHFT && ninputs[0]!=NG_RSHFT && ((keycomb_buf & 
 	return false;
 }
 }
-#endif
+//#endif
 
 //BS,カーソルのオートリピート機能
 #ifdef NG_AUTO_REPEAT
@@ -968,6 +1029,8 @@ bool auto_repeat_keycode(uint16_t keycode, keyrecord_t *record){
 			case NG_U:
 				SEND_STRING(SS_DOWN(X_BSPACE));
 				break;
+			default:
+				return false;
 			}
 			auto_repeat_timer = 0;
 			return true;
@@ -1301,7 +1364,19 @@ bool process_naginata(uint16_t keycode, keyrecord_t *record) {
 
   if (record->event.pressed) {
     switch (keycode) {
-	  case NG_Q ... NG_SHFT2:
+    case NG_SHFT ... NG_SHFT2:
+#ifndef NAGINATA_KOUCHI_SHIFT
+            if (ng_chrcount >= 1) {
+              naginata_type();
+              keycomb = 0UL;
+            }
+            ninputs[ng_chrcount] = keycode; // キー入力をバッファに貯める
+            ng_chrcount++;
+            keycomb |= ng_key[keycode - NG_Q]; // キーの重ね合わせ
+            return false;
+            break;
+#endif
+    case NG_Q ... NG_SLSH:
         ninputs[ng_chrcount] = keycode; // キー入力をバッファに貯める
         ng_chrcount++;
         keycomb |= ng_key[keycode - NG_Q]; // キーの重ね合わせ
@@ -1389,7 +1464,7 @@ bool naginata_lookup(int nt, bool shifted) {
 
 //trp3l 同手シフト用
 #ifdef SAMEHAND_SHFT
-  	  if( samehand_shft(nt, keycomb_buf) ) return true;
+  if( samehand_shft(nt, keycomb_buf) ) return true;
 #endif
 //_trp3l
   switch (keycomb_buf) {

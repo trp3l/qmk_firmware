@@ -53,6 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define NAGINATA_EDIT_WIN // JP106
 // #define NAGINATA_EDIT_MAC // JP106
 // #define MAC_LIVE_CONVERSION // Macでライブ変換をオンにしている場合
+#define NAGINATA_KOUCHI_SHIFT
 #define SAMEHAND_SHFT
 #define NG_AUTO_REPEAT
 //--------------------------------------------------------------------------------
