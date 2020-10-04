@@ -903,148 +903,78 @@ bool samehand_shft(int nt, uint32_t keycomb_buf){
 	}
 }
 #endif
-
 //BS,カーソルのオートリピート機能
+//#define NG_AUTO_REPEAT
 #ifdef NG_AUTO_REPEAT
 static uint16_t auto_repeat_timer = 1;//0sではないことに注意。
 static uint16_t prev_keycode = 0;
 
+
 bool auto_repeat_keycode(uint16_t keycode, keyrecord_t *record){
+
+
 	if(record->event.pressed){
+		switch (keycode) {
+		    case NG_Q ... NG_SHFT2:
+				break;
+		    default:
+		    	return false;
+		    	break;
+		}
 		if(TIMER_DIFF_16(record->event.time, auto_repeat_timer) < 100 && prev_keycode == keycode){
-			switch(keycode){
+/*			matrix_row_t    row   = record->event.key.row;
+			matrix_row_t    col   = record->event.key.col;*/
 
-			case NG_T:
-				if((keycomb & B_SHFT) == B_SHFT){
-					SEND_STRING(SS_DOWN(X_LSFT));
+
+
+			/* ninputs[ng_chrcount] = keycode; // キー入力をバッファに貯める
+			            ng_chrcount++;
+			            keycomb |= ng_key[keycode - NG_Q]; // キーの重ね合わせ
+			 */
+
+			uint32_t keycomb_s = keycomb;
+			keycomb_s |= ng_key[keycode - NG_Q]; // キーの重ね合わせ
+			switch(keycomb_s){
+
+			case B_T:
+			case B_Y:
+			case B_T|B_SHFT:
+			case B_Y|B_SHFT:
+			case B_J|B_D|B_F:
+			case B_M|B_D|B_F:
+			case B_K|B_D|B_F:
+			case B_COMM|B_D|B_F:
+			case B_U:
+			case B_L|B_D|B_F:
+			case B_DOT|B_D|B_F:
+				for(int k=0;k<=100; k++){//仮に暴走しても100回で停止する。
+					if(k == 0) SEND_STRING(SS_DELAY(100));
+
+					if(matrix_scan()){
+						if(!matrix_is_on(record->event.key.row, record->event.key.col)) {
+							break;
+						}
+					}
+					ninputs[ng_chrcount] = keycode;
+					ng_chrcount++;
+					//keycomb |= ng_key[keycode - NG_Q];
+					naginata_type();
+					SEND_STRING(SS_DELAY(50));
 				}
-				SEND_STRING(SS_DOWN(NGRT));
+				prev_keycode = keycode;
+				return true;
 				break;
 
-			case NG_Y:
-				if((keycomb & B_SHFT) == B_SHFT){
-					SEND_STRING(SS_DOWN(X_LSFT));
-				}
-				SEND_STRING(SS_DOWN(NGLT));
-				break;
-
-			case NG_J:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_DOWN(NGUP));
-				}else{
-					return false;
-				}
-				break;
-
-			case NG_M:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_DOWN(NGDN));
-				}else{
-					return false;
-				}
-				break;
-
-			case NG_K:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_DOWN(X_LSFT));
-					SEND_STRING(SS_DOWN(NGUP));
-				}else{
-					return false;
-				}
-				break;
-
-			case NG_COMM:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_DOWN(X_LSFT));
-					SEND_STRING(SS_DOWN(NGDN));
-				}else{
-					return false;
-				}
-				break;
-
-			case NG_U:
-				SEND_STRING(SS_DOWN(X_BSPACE));
-				break;
 			default:
 				return false;
 			}
-			auto_repeat_timer = 0;
-			return true;
 		}else{//時間切れ or 連続入力ではない。
 			return false;
 		}
 	}else{//key release
-		if(auto_repeat_timer == 0){//auto repeate 開始時にtimerをリセットしている。
-			switch(keycode){
-
-			case NG_T:
-				SEND_STRING(SS_UP(NGRT));
-				SEND_STRING(SS_UP(X_LSFT));
-				break;
-
-			case NG_Y:
-				SEND_STRING(SS_UP(NGLT));
-				SEND_STRING(SS_UP(X_LSFT));
-				break;
-
-			case NG_J:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_UP(NGUP));
-				}else{
-					auto_repeat_timer = record->event.time;
-					prev_keycode = keycode;
-					return false;
-				}
-				break;
-
-			case NG_M:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_UP(NGDN));
-				}else{
-					auto_repeat_timer = record->event.time;
-					prev_keycode = keycode;
-					return false;
-				}
-				break;
-			case NG_K:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_UP(X_LSFT));
-					SEND_STRING(SS_UP(NGUP));
-				}else{
-					auto_repeat_timer = record->event.time;
-					prev_keycode = keycode;
-					return false;
-				}
-				break;
-
-			case NG_COMM:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_UP(X_LSFT));
-					SEND_STRING(SS_UP(NGDN));
-				}else{
-					auto_repeat_timer = record->event.time;
-					prev_keycode = keycode;
-					return false;
-				}
-				break;
-
-			case NG_U:
-				SEND_STRING(SS_UP(X_BSPACE));
-				break;
-
-			default:
-				auto_repeat_timer = record->event.time;
-				prev_keycode = keycode;
-				return false;
-			}
-			auto_repeat_timer = record->event.time;
-			prev_keycode = keycode;
-			return true;
-		}else{
-			auto_repeat_timer = record->event.time;
-			prev_keycode = keycode;
-			return false;
-		}
+		prev_keycode = keycode;
+		auto_repeat_timer = record->event.time;
+		return false;
 	}
 }
 #endif
