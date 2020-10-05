@@ -925,7 +925,7 @@ bool samehand_shft(int nt, uint32_t keycomb_buf){
 //オートリピート発火を押下時ではなく、離した時からの経過時間で判定したい場合はコメントアウトを外してください。
 //#define AUTO_REPEAT_TRIGGER_IS_RELEASED
 //オートリピートを開始するために必要なキーの連打速度。ミリ秒。
-#define auto_repeat_tapping_term 150
+#define auto_repeat_tapping_term 180
 //オートリピートしたいキーをここに設定する。pgupとか追加したいときはここ。
 const PROGMEM uint32_t auto_repeat_keycodemap[] = {
 	B_T,
