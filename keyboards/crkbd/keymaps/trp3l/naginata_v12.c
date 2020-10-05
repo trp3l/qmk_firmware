@@ -833,227 +833,181 @@ const uint16_t ng_elem_counti = sizeof ngmapi  / sizeof ngmapi[0];
 
 //同手シフト拡張パッケージ
 #ifdef SAMEHAND_SHFT
-#ifdef SAMEHAND_SHFT
-static bool lastpressed_code_is_samehand_shft_L = false;
-
-static bool lastpressed_code_is_samehand_shft_R = false;
-enum samehand_statuses{
-void LR_buf_clear(void){
-	NO_SFT,
-	lastpressed_code_is_samehand_shft_L = false;
-	L_SHSFT,
-	lastpressed_code_is_samehand_shft_R = false;
-	R_SHSFT,
-};
-uint8_t samehand_status = 0;
-
+//通常のかな等と同じ定義で実装できます。
+typedef struct {
+  uint32_t key;
+  //naginata_keymap を流用してkana[7]にすると上手くいかない。
+  char kana[8];
+} naginata_keymap_same;
+//keymap.cに設定したLRを定義してください。
 #define NG_LSHFT NG_SHFT2
 #define NG_RSHFT NG_SHFT
+//同手シフトを追加したい場合はここ
+const PROGMEM naginata_keymap_same ngmaps[] = {
+	{.key = B_SHFT|B_Q       , .kana = SS_LCTL("a")},
+	{.key = B_SHFT|B_R       , .kana = SS_LCTL("d")},
+	{.key = B_SHFT|B_A       , .kana = SS_LCTL("s")},
+	{.key = B_SHFT|B_S       , .kana = SS_LCTL("z")},
+	{.key = B_SHFT|B_D       , .kana = SS_LCTL("y")},
+	{.key = B_SHFT|B_G       , .kana = SS_LCTL("f")},
+	{.key = B_SHFT|B_C       , .kana = SS_LCTL("v")},
+	{.key = B_SHFT|B_V       , .kana = SS_LCTL("c")},
+	{.key = B_SHFT|B_B       , .kana = SS_LCTL("x")},
+
+	{.key = B_SHFT|B_I       , .kana = "tu"        },
+	{.key = B_SHFT|B_L       , .kana = "ra"        },
+	{.key = B_SHFT|B_SCLN    , .kana = "re"        },
+};
+const uint16_t ng_elem_counts  = sizeof ngmaps   / sizeof ngmaps[0];
+//3つの状態で前回の同手シフトを記録しておく。（keycombではshftの左右が判定できない）
+enum samehand_statuses{
+	NO_SFT,
+	L_SHSFT,
+	R_SHSFT,
+};
+static uint8_t samehand_status = 0;
+//
 bool samehand_shft(int nt, uint32_t keycomb_buf){
-  //キーコードに左手のキーが含まれている & Lシフトを押している場合に同手シフトを起動する。
-  //連続シフト中などで、Lシフトより先にRシフトを押していた場合は起動しない。
-  //左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
-if( (keycomb_buf & B_SHFT) == B_SHFT && ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
-   (ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || samehand_status == L_SHSFT) ){
+	naginata_keymap_same bngmaps; // PROGMEM buffer
+	//シフト入力中でない時は判定をスキップして終了。
+	if(!(keycomb_buf & B_SHFT)) return false;
 
-	switch (keycomb_buf){
-	case B_SHFT|B_Q:
-		SEND_STRING(SS_LCTL("a"));
-		break;
-	case B_SHFT|B_R:
-		SEND_STRING(SS_LCTL("d"));
-		break;
-	case B_SHFT|B_A:
-		SEND_STRING(SS_LCTL("s"));
-		break;
-	case B_SHFT|B_S:
-		SEND_STRING(SS_LCTL("z"));
-		break;
-	case B_SHFT|B_D:
-		SEND_STRING(SS_LCTL("y"));
-		break;
-	case B_SHFT|B_G:
-		SEND_STRING(SS_LCTL("f"));
-		break;
-	case B_SHFT|B_C:
-		SEND_STRING(SS_LCTL("v"));
-		break;
-	case B_SHFT|B_V:
-		SEND_STRING(SS_LCTL("c"));
-		break;
-	case B_SHFT|B_B:
-		SEND_STRING(SS_LCTL("x"));
-		break;
-	}
-	samehand_status = L_SHSFT;
-	compress_buffer(nt);
-	return true;
-//Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
-}else if( (keycomb_buf & B_SHFT)==B_SHFT && ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
-		 (ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || samehand_status == R_SHSFT) ){
+	  //キーコードに左手のキーが含まれている & Lシフトを押している場合に同手シフトを起動する。
+	  //連続シフト中などで、Lシフトより先に右手のキーやRシフトを押していた場合は起動しない。
+	  //左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
+	if( ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
+	   (ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || samehand_status == L_SHSFT) ){
 
-	switch (keycomb_buf){
-	case B_SHFT|B_I:
-		SEND_STRING("tu");
-		break;
-	case B_SHFT|B_L:
-		SEND_STRING("ra");
-		break;
-	case B_SHFT|B_SCLN:
-		SEND_STRING("re");
-		break;
+		for (int i = 0; i < ng_elem_counts; i++) {
+			memcpy_P(&bngmaps, &ngmaps[i], sizeof(bngmaps));
+			if (keycomb_buf == bngmaps.key) {
+			  send_string(bngmaps.kana);
+			  compress_buffer(nt);
+			  samehand_status = L_SHSFT;
+			  return true;
+			}
+		}
+		samehand_status = L_SHSFT;
+		return false;
+	  //Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
+	}else if( ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
+			 (ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || samehand_status == R_SHSFT) ){
+
+		for (int i = 0; i < ng_elem_counts; i++) {
+	        memcpy_P(&bngmaps, &ngmaps[i], sizeof(bngmaps));
+	        if (keycomb_buf == bngmaps.key) {
+	          send_string(bngmaps.kana);
+	          compress_buffer(nt);
+			  samehand_status = R_SHSFT;
+			  return true;
+	        }
+		  }
+		samehand_status = R_SHSFT;
+        return false;
+	}else{
+		samehand_status = NO_SFT;
+		return false;
 	}
-	samehand_status = R_SHSFT;
-	compress_buffer(nt);
-	return true;
-}else{
-	samehand_status = NO_SFT;
-	return false;
-}
 }
 #endif
-
-//BS,カーソルのオートリピート機能
+//オートリピート機能
 #ifdef NG_AUTO_REPEAT
-static uint16_t auto_repeat_timer = 1;//0sではないことに注意。
-static uint16_t prev_keycode = 0;
+
+//オートリピート開始時に引っ掛かりを設定する。二連打とオートリピート発火を二回目押下後にも選択したいときはここ。
+//マスター側のキーボードはなぜかスキャンが遅いので、ラグくて調整が難しい。（おま環？）
+//#define FIRST_DELAY
+#ifdef FIRST_DELAY
+//引っ掛かりの長さ設定。ミリ秒単位。
+#define f_delay_time 500
+#endif
+//オートリピートのトグル速度。ミリ秒。
+#define auto_repeat_toggle 30
+//オートリピート発火を押下時ではなく、離した時からの経過時間で判定したい場合はコメントアウトを外してください。
+//#define AUTO_REPEAT_TRIGGER_IS_RELEASED
+//オートリピートを開始するために必要なキーの連打速度。ミリ秒。
+#define auto_repeat_tapping_term 150
+//オートリピートしたいキーをここに設定する。pgupとか追加したいときはここ。
+const PROGMEM uint32_t auto_repeat_keycodemap[] = {
+	B_T,
+	B_Y,
+	B_T|B_SHFT,
+	B_Y|B_SHFT,
+	B_J|B_D|B_F,
+	B_M|B_D|B_F,
+	B_K|B_D|B_F,
+	B_COMM|B_D|B_F,
+	B_U,
+	B_L|B_D|B_F,
+	B_DOT|B_D|B_F,
+};
+const uint16_t auto_repeat_elem_counts  = sizeof auto_repeat_keycodemap / sizeof auto_repeat_keycodemap[0];
+
+static uint16_t auto_repeat_timer = 0;
+static uint16_t auto_repeat_keycode_prev = 0;
 
 bool auto_repeat_keycode(uint16_t keycode, keyrecord_t *record){
+
 	if(record->event.pressed){
-		if(TIMER_DIFF_16(record->event.time, auto_repeat_timer) < 100 && prev_keycode == keycode){
-			switch(keycode){
+		//薙刀キー以外は判定をスキップして終了。
+		switch (keycode) {
+		    case NG_Q ... NG_SHFT2:
+				break;
+		    default:
+		    	return false;
+		    	break;
+		}
+		if(TIMER_DIFF_16(record->event.time, auto_repeat_timer) < auto_repeat_tapping_term && auto_repeat_keycode_prev == keycode){
 
-			case NG_T:
-				if((keycomb & B_SHFT) == B_SHFT){
-					SEND_STRING(SS_DOWN(X_LSFT));
+			uint32_t keycomb_s = keycomb;
+			keycomb_s |= ng_key[keycode - NG_Q]; // キーの重ね合わせ
+			uint32_t keycomb_sb = 0UL;
+			//キーコードの検索。
+			for(int i = 0; i < auto_repeat_elem_counts; i++){
+				memcpy_P(&keycomb_sb , &auto_repeat_keycodemap[i], sizeof(keycomb_sb));
+				if(keycomb_sb == keycomb_s){
+					//初期遅延を発生させ、二連打とオートリピート発火を汲み分ける。
+					#ifdef FIRST_DELAY
+					SEND_STRING(SS_DELAY(f_delay_time));
+					matrix_scan();
+					if(!matrix_is_on(record->event.key.row, record->event.key.col)){
+						auto_repeat_keycode_prev = keycode;
+						return false;
+					}
+					#endif
+					//キーを離すまでキーコードを発行し続ける。トグル速度を早くするとラグが出てしまう。
+					while( matrix_is_on(record->event.key.row, record->event.key.col) ){
+						ninputs[ng_chrcount] = keycode;
+						ng_chrcount++;
+						naginata_type();
+						SEND_STRING(SS_DELAY(auto_repeat_toggle));
+						matrix_scan();
+					}
+					auto_repeat_keycode_prev = keycode;
+					#ifndef AUTO_REPEAT_TRIGGER_IS_RELEASED
+						auto_repeat_timer = record->event.time;
+					#endif
+					return true;
 				}
-				SEND_STRING(SS_DOWN(NGRT));
-				break;
-
-			case NG_Y:
-				if((keycomb & B_SHFT) == B_SHFT){
-					SEND_STRING(SS_DOWN(X_LSFT));
-				}
-				SEND_STRING(SS_DOWN(NGLT));
-				break;
-
-			case NG_J:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_DOWN(NGUP));
-				}else{
-					return false;
-				}
-				break;
-
-			case NG_M:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_DOWN(NGDN));
-				}else{
-					return false;
-				}
-				break;
-
-			case NG_K:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_DOWN(X_LSFT));
-					SEND_STRING(SS_DOWN(NGUP));
-				}else{
-					return false;
-				}
-				break;
-
-			case NG_COMM:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_DOWN(X_LSFT));
-					SEND_STRING(SS_DOWN(NGDN));
-				}else{
-					return false;
-				}
-				break;
-
-			case NG_U:
-				SEND_STRING(SS_DOWN(X_BSPACE));
-				break;
 			}
-			auto_repeat_timer = 0;
-			return true;
+			//オートリピート対象のキーコードではなかった。
+			return false;
+
 		}else{//時間切れ or 連続入力ではない。
-			return false;
-		}
-	}else{//key release
-		if(auto_repeat_timer == 0){//auto repeate 開始時にtimerをリセットしている。
-			switch(keycode){
-
-			case NG_T:
-				SEND_STRING(SS_UP(NGRT));
-				SEND_STRING(SS_UP(X_LSFT));
-				break;
-
-			case NG_Y:
-				SEND_STRING(SS_UP(NGLT));
-				SEND_STRING(SS_UP(X_LSFT));
-				break;
-
-			case NG_J:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_UP(NGUP));
-				}else{
-					auto_repeat_timer = record->event.time;
-					prev_keycode = keycode;
-					return false;
-				}
-				break;
-
-			case NG_M:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_UP(NGDN));
-				}else{
-					auto_repeat_timer = record->event.time;
-					prev_keycode = keycode;
-					return false;
-				}
-				break;
-			case NG_K:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_UP(X_LSFT));
-					SEND_STRING(SS_UP(NGUP));
-				}else{
-					auto_repeat_timer = record->event.time;
-					prev_keycode = keycode;
-					return false;
-				}
-				break;
-
-			case NG_COMM:
-				if( (keycomb & (B_D|B_F) ) == (B_D|B_F) ){
-					SEND_STRING(SS_UP(X_LSFT));
-					SEND_STRING(SS_UP(NGDN));
-				}else{
-					auto_repeat_timer = record->event.time;
-					prev_keycode = keycode;
-					return false;
-				}
-				break;
-
-			case NG_U:
-				SEND_STRING(SS_UP(X_BSPACE));
-				break;
-
-			default:
+			#ifndef AUTO_REPEAT_TRIGGER_IS_RELEASED
 				auto_repeat_timer = record->event.time;
-				prev_keycode = keycode;
-				return false;
-			}
-			auto_repeat_timer = record->event.time;
-			prev_keycode = keycode;
-			return true;
-		}else{
-			auto_repeat_timer = record->event.time;
-			prev_keycode = keycode;
+			#endif
 			return false;
 		}
+
+	}else{//key release
+		auto_repeat_keycode_prev = keycode;
+		#ifdef AUTO_REPEAT_TRIGGER_IS_RELEASED
+			auto_repeat_timer = record->event.time;
+		#endif
+		return false;
 	}
 }
+#endif
 //_trp3l
 /*
 void set_naginata(uint8_t ng_layer, uint16_t *onk, uint16_t *offk) {
