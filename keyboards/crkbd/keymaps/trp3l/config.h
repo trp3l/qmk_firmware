@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // #define MAC_LIVE_CONVERSION // Macでライブ変換をオンにしている場合
 #define NAGINATA_KOUCHI_SHIFT
 #define SAMEHAND_SHFT
-//#define NG_AUTO_REPEAT
+#define NG_AUTO_REPEAT
 //--------------------------------------------------------------------------------
 //#define COMBO_COUNT 2
 //#define COMBO_TERM 100
