@@ -53,11 +53,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 
 
-[_KOGATANA] = LAYOUT(
-        NG_V,    NG_Z,   NG_A,   NG_Q,   XXXXXXX, XXXXXXX,   NG_Q,    NG_A,    NG_Z,    NG_V,
-        NG_SHFT, NG_X,   NG_S,   NG_W,   XXXXXXX, XXXXXXX,   NG_W,    NG_S,    NG_X, NG_SHFT,
-        NG_N,    NG_C,   NG_D,   NG_E,   NG_T,       NG_T,   NG_E,    NG_D,    NG_C,    NG_N,
-                         NG_F,   NG_R,   NG_Y,       NG_Y,   NG_R,    NG_F
+[_KOGATANA] = LAYOUT(\
+        NG_V,    NG_Z,   NG_A,   NG_Q,   XXXXXXX, XXXXXXX,   NG_Q,    NG_A,    NG_Z,    NG_V,\
+        NG_SHFT, NG_X,   NG_S,   NG_W,   XXXXXXX, XXXXXXX,   NG_W,    NG_S,    NG_X, NG_SHFT,\
+        NG_N,    NG_C,   NG_D,   NG_E,   NG_T,       NG_T,   NG_E,    NG_D,    NG_C,    NG_N,\
+                         NG_F,   NG_R,   NG_Y,       NG_Y,   NG_R,    NG_F  \
 		),
 
 /* Raise
