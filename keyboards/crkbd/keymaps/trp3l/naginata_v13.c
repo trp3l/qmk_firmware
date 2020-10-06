@@ -789,7 +789,6 @@ const PROGMEM naginata_keymap_long ngmapl[] = {
 //trp3l 固有名詞モード
    {.key = B_S|B_D|B_Y    , .kana = SS_TAP(X_END) SS_LSFT(SS_TAP(X_UP) SS_TAP(X_END))},
    {.key = B_S|B_D|B_H    , .kana = SS_TAP(X_END) SS_LSFT(SS_TAP(X_HOME))},
-   {.key = B_K|B_L|B_S    , .kana = "hinagi "SS_TAP(X_ENTER)},
  //_trp3l
 
 };
@@ -822,9 +821,7 @@ const PROGMEM naginata_keymap_unicode ngmapu[] = {
   {.key = B_S|B_D|B_K       , .kana = "2193"}, // ↓
   {.key = B_S|B_D|B_J       , .kana = "2190"}, // ←
   {.key = B_S|B_D|B_L       , .kana = "2192"}, // →
-
-
-
+  {.key = B_K|B_L|B_S       , .kana = "967D 51EA"},//
 //_trp3l
 #endif
 };
