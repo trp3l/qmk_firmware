@@ -16,6 +16,7 @@
 
 #include QMK_KEYBOARD_H
 #include "naginata.h"
+#include "ng_ex_tools.h"
 
 #if !defined(__AVR__)
   #include <string.h>
@@ -142,6 +143,33 @@ const uint32_t ng_key[] = {
   [NG_SHFT - NG_Q] = B_SHFT,
   [NG_SHFT2 - NG_Q] = B_SHFT,
 };
+//trp3l ng_ex_tools
+#ifdef SAMEHAND_SHFT
+uint16_t get_ninputs_i(uint8_t ng_chr){
+	return ninputs[ng_chr];
+}
+#endif
+#ifdef NG_AUTO_REPEAT
+uint32_t get_ng_key(uint16_t keycode){
+	if(SAFE_RANGE <= keycode && keycode <= NG_SAFE_RANGE){
+		return ng_key[keycode - NG_Q];
+	}else{
+		return  0;
+	}
+}
+uint32_t get_keycomb(void){
+	return keycomb;
+}
+void add_chrcount(void){
+	if(ng_chrcount+1 <= NGBUFFER)
+		ng_chrcount++;
+}
+void set_ninputs_i(uint16_t keycode){
+	if(SAFE_RANGE <= keycode && keycode <= NG_SAFE_RANGE)
+		ninputs[ng_chrcount] = keycode;
+}
+#endif
+//_trp3l
 
 // カナ変換テーブル
 typedef struct {
@@ -249,9 +277,10 @@ typedef struct {
 
 
 //D濁点の左右判定
-static const uint32_t LEFT_KEY = B_Q|B_W|B_E|B_R|B_T|
-								 B_A|B_S|B_D|B_F|B_G|
-								 B_Z|B_X|B_C|B_V|B_B;
+#define LEFT_KEY (B_Q|B_W|B_E|B_R|B_T|\
+				  B_A|B_S|B_D|B_F|B_G|\
+				  B_Z|B_X|B_C|B_V|B_B)
+
 #define DAK(seion) ((seion & LEFT_KEY) <= 0 ? ((DAK_L|seion)& ~B_SHFT) : ((DAK_R|seion)& ~B_SHFT))
 #define HAN(seion) ((seion & LEFT_KEY) <= 0 ? ((HAN_L|seion)& ~B_SHFT) : ((HAN_R|seion)& ~B_SHFT))
 
@@ -862,193 +891,8 @@ const uint16_t ng_elem_countu = sizeof ngmapu  / sizeof ngmapu[0];
 const uint16_t ng_elem_counti = sizeof ngmapi  / sizeof ngmapi[0];
 
 
-//同手シフト拡張パッケージ
-#ifdef SAMEHAND_SHFT
-//通常のかな等と同じ定義で実装できます。
-typedef struct {
-  uint32_t key;
-  //naginata_keymap を流用してkana[7]にすると上手くいかない。
-  char kana[8];
-} naginata_keymap_same;
-//keymap.cに設定したLRを定義してください。
-#define NG_LSHFT NG_SHFT2
-#define NG_RSHFT NG_SHFT
-//同手シフトを追加したい場合はここ
-const PROGMEM naginata_keymap_same ngmaps[] = {
-	{.key = B_SHFT|B_Q       , .kana = SS_LCTL("a")},
-	{.key = B_SHFT|B_R       , .kana = SS_LCTL("d")},
-	{.key = B_SHFT|B_A       , .kana = SS_LCTL("s")},
-	{.key = B_SHFT|B_S       , .kana = SS_LCTL("z")},
-	{.key = B_SHFT|B_D       , .kana = SS_LCTL("y")},
-	{.key = B_SHFT|B_G       , .kana = SS_LCTL("f")},
-	{.key = B_SHFT|B_C       , .kana = SS_LCTL("v")},
-	{.key = B_SHFT|B_V       , .kana = SS_LCTL("c")},
-	{.key = B_SHFT|B_B       , .kana = SS_LCTL("x")},
 
-	{.key = B_SHFT|B_I       , .kana = "tu"        },
-	{.key = B_SHFT|B_L       , .kana = "ra"        },
-	{.key = B_SHFT|B_SCLN    , .kana = "re"        },
-};
-const uint16_t ng_elem_counts  = sizeof ngmaps   / sizeof ngmaps[0];
-//3つの状態で前回の同手シフトを記録しておく。（keycombではshftの左右が判定できない）
-enum samehand_statuses{
-	NO_SFT,
-	L_SHSFT,
-	R_SHSFT,
-};
-static uint8_t samehand_status = 0;
-//
-bool samehand_shft(int nt, uint32_t keycomb_buf){
-	naginata_keymap_same bngmaps; // PROGMEM buffer
-	//シフト入力中でない時は判定をスキップして終了。
-	if(!(keycomb_buf & B_SHFT)) return false;
 
-	  //キーコードに左手のキーが含まれている & Lシフトを押している場合に同手シフトを起動する。
-	  //連続シフト中などで、Lシフトより先に右手のキーやRシフトを押していた場合は起動しない。
-	  //左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
-	if( ninputs[0]!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
-	   (ninputs[0]==NG_LSHFT || ninputs[1]==NG_LSHFT || samehand_status == L_SHSFT) ){
-
-		for (int i = 0; i < ng_elem_counts; i++) {
-			memcpy_P(&bngmaps, &ngmaps[i], sizeof(bngmaps));
-			if (keycomb_buf == bngmaps.key) {
-			  send_string(bngmaps.kana);
-			  compress_buffer(nt);
-			  samehand_status = L_SHSFT;
-			  return true;
-			}
-		}
-		samehand_status = L_SHSFT;
-		return false;
-	  //Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
-	}else if( ninputs[0]!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
-			 (ninputs[0]==NG_RSHFT || ninputs[1]==NG_RSHFT || samehand_status == R_SHSFT) ){
-
-		for (int i = 0; i < ng_elem_counts; i++) {
-	        memcpy_P(&bngmaps, &ngmaps[i], sizeof(bngmaps));
-	        if (keycomb_buf == bngmaps.key) {
-	          send_string(bngmaps.kana);
-	          compress_buffer(nt);
-			  samehand_status = R_SHSFT;
-			  return true;
-	        }
-		  }
-		samehand_status = R_SHSFT;
-        return false;
-	}else{
-		samehand_status = NO_SFT;
-		return false;
-	}
-}
-#endif
-//オートリピート機能
-#ifdef NG_AUTO_REPEAT
-
-//オートリピート開始時に引っ掛かりを設定する。二連打とオートリピート発火を二回目押下後にも選択したいときはここ。
-//マスター側のキーボードはなぜかスキャンが遅いので、ラグくて調整が難しい。（おま環？）
-//#define FIRST_DELAY
-#ifdef FIRST_DELAY
-//引っ掛かりの長さ設定。ミリ秒単位。
-#define f_delay_time 500
-#endif
-//オートリピートのトグル速度。ミリ秒。
-#define auto_repeat_toggle 30
-//オートリピート発火を押下時ではなく、離した時からの経過時間で判定したい場合はコメントアウトを外してください。
-//#define AUTO_REPEAT_TRIGGER_IS_RELEASED
-//オートリピートを開始するために必要なキーの連打速度。ミリ秒。
-#define auto_repeat_tapping_term 180
-//オートリピートしたいキーをここに設定する。pgupとか追加したいときはここ。
-const PROGMEM uint32_t auto_repeat_keycodemap[] = {
-	B_T,
-	B_Y,
-	B_U,
-	B_T|B_SHFT,
-	B_Y|B_SHFT,
-	B_D|B_F|B_J,
-	B_D|B_F|B_K,
-	B_D|B_F|B_L,
-	B_D|B_F|B_M,
-	B_D|B_F|B_COMM,
-	B_D|B_F|B_DOT,
-
-	B_C|B_V|B_U,
-	B_C|B_V|B_I,
-	B_C|B_V|B_O,
-	B_C|B_V|B_P,
-	B_C|B_V|B_J,
-	B_C|B_V|B_K,
-	B_C|B_V|B_L,
-	B_C|B_V|B_SCLN,
-};
-const uint16_t auto_repeat_elem_counts  = sizeof auto_repeat_keycodemap / sizeof auto_repeat_keycodemap[0];
-
-static uint16_t auto_repeat_timer = 0;
-static uint16_t auto_repeat_keycode_prev = 0;
-
-bool auto_repeat_keycode(uint16_t keycode, keyrecord_t *record){
-
-	if(record->event.pressed){
-		//薙刀キー以外は判定をスキップして終了。
-		switch (keycode) {
-		    case NG_Q ... NG_SHFT2:
-				break;
-		    default:
-		    	return false;
-		    	break;
-		}
-		if(TIMER_DIFF_16(record->event.time, auto_repeat_timer) < auto_repeat_tapping_term && auto_repeat_keycode_prev == keycode){
-
-			uint32_t keycomb_s = keycomb;
-			keycomb_s |= ng_key[keycode - NG_Q]; // キーの重ね合わせ
-			uint32_t keycomb_sb = 0UL;
-			//キーコードの検索。
-			for(int i = 0; i < auto_repeat_elem_counts; i++){
-				memcpy_P(&keycomb_sb , &auto_repeat_keycodemap[i], sizeof(keycomb_sb));
-				if(keycomb_sb == keycomb_s){
-					//初期遅延を発生させ、二連打とオートリピート発火を汲み分ける。
-					#ifdef FIRST_DELAY
-					SEND_STRING(SS_DELAY(f_delay_time));
-					matrix_scan();
-					if(!matrix_is_on(record->event.key.row, record->event.key.col)){
-						auto_repeat_keycode_prev = keycode;
-						return false;
-					}
-					#endif
-					//キーを離すまでキーコードを発行し続ける。トグル速度を早くするとラグが出てしまう。
-					while( matrix_is_on(record->event.key.row, record->event.key.col) ){
-						ninputs[ng_chrcount] = keycode;
-						ng_chrcount++;
-						naginata_type();
-						SEND_STRING(SS_DELAY(auto_repeat_toggle));
-						matrix_scan();
-					}
-					auto_repeat_keycode_prev = keycode;
-					#ifndef AUTO_REPEAT_TRIGGER_IS_RELEASED
-						auto_repeat_timer = record->event.time;
-					#endif
-					return true;
-				}
-			}
-			//オートリピート対象のキーコードではなかった。
-			return false;
-
-		}else{//時間切れ or 連続入力ではない。
-			#ifndef AUTO_REPEAT_TRIGGER_IS_RELEASED
-				auto_repeat_timer = record->event.time;
-			#endif
-			return false;
-		}
-
-	}else{//key release
-		auto_repeat_keycode_prev = keycode;
-		#ifdef AUTO_REPEAT_TRIGGER_IS_RELEASED
-			auto_repeat_timer = record->event.time;
-		#endif
-		return false;
-	}
-}
-#endif
-//_trp3l
 /*
 void set_naginata(uint8_t ng_layer, uint16_t *onk, uint16_t *offk) {
   naginata_layer = ng_layer;
@@ -1182,39 +1026,21 @@ void mac_send_string(const char *str) {
   tap_code(KC_ENT);
 }
 
-// modifierが押されたら薙刀式レイヤーをオフしてベースレイヤーに戻す
-// get_mods()がうまく動かない
-static int n_modifier = 0;
+// modifierが押されたら薙刀式レイヤーをオフしてベースレイヤーに戻す// get_mods()がうまく動かない
+
+//static int n_modifier = 0;
+
 
 bool process_modifier(uint16_t keycode, keyrecord_t *record) {
-  switch (keycode) {
-    case KC_LCTRL:
-    case KC_LSHIFT:
-    case KC_LALT:
-    case KC_LGUI:
-    case KC_RCTRL:
-    case KC_RSHIFT:
-    case KC_RALT:
-    case KC_RGUI:
-    case LCTL_T(0x01) ... LCTL_T(0xFF):
-    case LSFT_T(0x01) ... LSFT_T(0xFF):
-    case LALT_T(0x01) ... LALT_T(0xFF):
-    case LGUI_T(0x01) ... LGUI_T(0xFF):
-    case RCTL_T(0x01) ... RCTL_T(0xFF):
-    case RSFT_T(0x01) ... RSFT_T(0xFF):
-    case RALT_T(0x01) ... RALT_T(0xFF):
-    case RGUI_T(0x01) ... RGUI_T(0xFF):
+	if(is_mod_user(keycode) ){
       if (record->event.pressed) {
-        n_modifier++;
         layer_off(naginata_layer);
       } else {
-        n_modifier--;
-        if (n_modifier == 0) {
+        if (!get_mods_user()) {
           layer_on(naginata_layer);
         }
       }
       return true;
-      break;
   }
   return false;
 }

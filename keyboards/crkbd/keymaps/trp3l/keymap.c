@@ -11,6 +11,7 @@
 
 #include "naginata.h"
 NGKEYS naginata_keys;
+#include "ng_ex_tools.h"
 
 extern keymap_config_t keymap_config;
 
@@ -90,21 +91,22 @@ qk_tap_dance_action_t tap_dance_actions[] = {
 
 
 #define LT_TAB LT(_RAISE,KC_TAB)
-#define LT_ENTER LT(_LOWER,KC_ENTER)
+#define LT_ENT LT(_LOWER,KC_ENTER)
+#define CTL_T_BS LCTL_T(KC_BSPACE)
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	[_XIN] = LAYOUT(
-		LALT_T(KC_ESCAPE),	KC_Q, 		KC_A,	 KC_R,	 KC_D,	   KC_RIGHT,		KC_LEFT, KC_BSPACE,KC_U,	   KC_P,	KC_Z,	RCTL_T(KC_PSCREEN),
-		LSFT_T(KC_DELETE),	KC_W,		KC_S,	 KC_H,	 KC_T,	   KC_G,			KC_Y,	 KC_I,	   KC_E,	   KC_O,	KC_N,	KC_BSPACE,
+		LALT_T(KC_ESCAPE),	KC_Q, 		KC_A,	 KC_R,	 KC_D,	   KC_RIGHT,		KC_LEFT, KC_BSPACE,KC_U,	   KC_P,	KC_Z,	RALT_T(KC_PSCREEN),
+		LSFT_T(KC_DELETE),	KC_W,		KC_S,	 KC_H,	 KC_T,	   KC_G,			KC_Y,	 KC_I,	   KC_E,	   KC_O,	KC_N,	RCTL_T(KC_BSPACE),
 			LSFT(KC_KPS),	JP_COLN,	KC_F,	 KC_V,	 KC_C,	   KC_X,			KC_M,	 KC_L,	   KC_J,	   KC_B,	KC_K,	RGUI_T(KC_SLEP),
-								TD(_PRN),  S_CUT_W,  LT_TAB,		LT_ENTER, RSFT_T(KC_SPACE), TD(COMMA_SCOL)
+								TD(_PRN),  S_CUT_W,  LT_TAB,		LT_ENT, RSFT_T(KC_SPACE), TD(COMMA_SCOL)
 		),
 
 
 	[_NAGINATA] = LAYOUT(
-		_______ ,NG_Q,	   NG_W,	NG_E,	NG_R,	  NG_T,  		NG_Y,    NG_U,    NG_I,    NG_O,    NG_P,    _______,
-		_______ ,NG_A,	   NG_S,	NG_D,	NG_F,	  NG_G, 		NG_H,    NG_J,    NG_K,    NG_L,    NG_SCLN, _______,
-		_______ ,NG_Z,	   NG_X,	NG_C,	NG_V,	  NG_B, 		NG_N,    NG_M,    NG_COMM, NG_DOT,  NG_SLSH, RGUI_T(KC_SLEP),
-							   _______, 	NG_SHFT2,  LT_TAB, 	   LT_ENTER, NG_SHFT, _______
+		_______ ,NG_Q,   NG_W,   NG_E,    NG_R,    NG_T,      NG_Y,    NG_U,    NG_I,    NG_O,    NG_P,    _______,
+		_______ ,NG_A,   NG_S,   NG_D,    NG_F,    NG_G,      NG_H,    NG_J,    NG_K,    NG_L,    NG_SCLN, _______,
+		_______ ,NG_Z,   NG_X,   NG_C,    NG_V,    NG_B,      NG_N,    NG_M,    NG_COMM, NG_DOT,  NG_SLSH, _______,
+						       _______, NG_SHFT2,  LT_TAB,  LT_ENT, NG_SHFT, _______
 		),
 
 
@@ -116,17 +118,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		),
 
 	[_LOWER] = LAYOUT(
-			JP_TILD ,JP_BSLS ,	JP_AT,	  JP_EXLM, 	    	KC_QUES,		JP_PIPE,		_______ ,_______ ,KC_PGUP ,KC_INS  ,KC_PAUSE,_______ ,
-			JP_UNDS ,JP_DQT,	JP_QUOT,  TD(_BRC), 		TD(_CBR),		JP_GRV,			_______ ,KC_HOME ,KC_PGDN ,KC_END  ,_______ ,KC_BSPACE ,
-			KC_INS  ,JP_HASH, 	KC_DLR,   JP_CIRC,			KC_RABK, 		JP_AMPR,		_______ ,_______ ,KC_APP  ,_______ ,_______ ,_______ ,
-											KC_LABK, 	 LCTL_T(KC_BSPACE),	  LT_TAB,	   XXXXXXX,  RSFT_T(KC_SPACE) ,TD(COMMA_SCOL)
+			JP_TILD ,JP_BSLS ,	JP_AT,	  JP_EXLM,      JP_CIRC,		JP_GRV,		_______ ,_______ ,KC_PGUP ,KC_INS  ,KC_PAUSE,_______ ,
+			JP_UNDS ,JP_DQT,	JP_QUOT,  TD(_BRC),     TD(_CBR),		JP_AMPR,	_______ ,KC_HOME ,KC_PGDN ,KC_END  ,_______ ,KC_BSPACE ,
+			XXXXXXX ,JP_HASH, 	KC_DLR,   KC_LABK,      KC_QUES,		JP_PIPE,	_______ ,_______ ,KC_APP  ,_______ ,_______ ,_______ ,
+										  KC_RABK,      CTL_T_BS,       LT_TAB,     XXXXXXX,  RSFT_T(KC_SPACE) ,TD(COMMA_SCOL)
 		),
 
 
 	[_RAISE] = LAYOUT(
-		_______,JP_DOT, 	KC_F9,	KC_F10,	KC_F11,	KC_F12,		JP_YEN  ,KC_7,	 KC_8,	KC_9 ,	KC_SLASH,	JP_ASTR,
-		_______,KC_SPACE,	KC_F5, 	KC_F6,	KC_F7,	KC_F8,		KC_UP   ,KC_4,	 KC_5,	KC_6, 	JP_EQL,		JP_PLUS,
-		_______,KC_ENTER, 	KC_F1,	KC_F2,	KC_F3, 	KC_F4,		KC_DOWN ,KC_1,	 KC_2,	KC_3,	KC_MINUS,	KC_PERC,
+		_______,JP_DOT, 	KC_F9,	KC_F10,	KC_F11,	KC_F12,		JP_YEN,   KC_7,   KC_8,  KC_9,	KC_SLASH,	JP_ASTR,
+		_______,KC_SPACE,	KC_F5, 	KC_F6,	KC_F7,	KC_F8,		KC_UP,    KC_4,   KC_5,  KC_6, 	JP_EQL,		JP_PLUS,
+		_______,KC_ENTER, 	KC_F1,	KC_F2,	KC_F3, 	KC_F4,		KC_DOWN,  KC_1,   KC_2,  KC_3,	KC_MINUS,	KC_PERC,
 									_______,_______,XXXXXXX,	KC_ENTER, JP_DOT, KC_0
 		)
 
@@ -215,63 +217,57 @@ void iota_gfx_task_user(void) {
 #endif//SSD1306OLED
 
 //macro-------------------------------------------------------------------------
-bool s_cut_pressed = false;
-bool modifier_pressed = false;
-static uint16_t W_pressed_time = 0;
-bool SLP_pressed = false;
-static uint16_t SLP_timer = 0;
 //note : keyrecord_t は tmk_core/common/action.h line51 に定義してあるよ
 //event.pressed は tmk_core/common/keycode.h line35
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+	mods_count_user(keycode, record);
 
-  if (record->event.pressed) {
+/*  if (record->event.pressed) {
 	#ifdef SSD1306OLED
 		set_keylog(keycode, record);
 	#endif
 	// set_timelog();
-  }
+  }*/
 
   switch (keycode) {
     case S_CUT_W:
- 		  if (record->event.pressed) {
- 			 s_cut_pressed = true;
- 			W_pressed_time = record->event.time;
- 			 layer_on(_S_CUT);
- 			 SEND_STRING(SS_DOWN(X_LCTRL));
- 		  }else{
- 			 SEND_STRING(SS_UP(X_LCTRL));
- 			 layer_off(_S_CUT);
- 			 if(s_cut_pressed && TIMER_DIFF_16(record->event.time, W_pressed_time) < 500){
- 				tap_code(KC_BSPACE);
- 			}
-     		s_cut_pressed = false;
-     		W_pressed_time = 0;
- 		  }
- 	  return false;
+	  if (record->event.pressed) {
+		 if(is_double_tapped_within_time(keycode, 200)){
+			 register_code(KC_BSPACE);
+		 }else{
+			 layer_on(_S_CUT);
+			 register_code(KC_LCTRL);
+		 }
+		 set_keycode_prev(keycode, record->event.time);
+	  }else{
+		  if(get_double_tap_state()){
+			 unregister_code(KC_BSPACE);
+		  }else{
+			 unregister_code(KC_LCTRL);
+			 layer_off(_S_CUT);
+			 if(is_released_within_time(keycode, 500)){
+				tap_code(KC_BSPACE);
+			 }
+		  }
+	  }
+	  return false;
  	  break;
 
    case S_TEXT:
 	if(record->event.pressed){
 		tap_code(KC_T);
-		if(!modifier_pressed){
-//		if(get_mods() != 0){
+		if(!get_mods_user()){
 			layer_off(_S_CUT);
 			naginata_on();
 		}
 	}
 	return false;
 	break;
+
    case RGUI_T(KC_SLEP):
-		   if(record->event.pressed){
-			   SLP_pressed = true;
-			   SLP_timer = record->event.time;
-		   }else{
-			   if(SLP_pressed && !modifier_pressed && TIMER_DIFF_16(record->event.time, SLP_timer) < 300){
-				   layer_off(_S_CUT);
-				   naginata_on();
-			   }
-			   SLP_pressed = false;
-			   SLP_timer = 0;
+		   if(!record->event.pressed && is_released_within_time(keycode, 300)){
+			   layer_off(_S_CUT);
+			   naginata_on();
 		   }
    break;
     case RGB_MOD:
@@ -294,27 +290,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       #endif
       break;
 
-    case KC_LCTRL:
-    case KC_LSHIFT:
-    case KC_LALT:
-    	if (record->event.pressed) {
-    		modifier_pressed = true;
-    	}else{
-    		modifier_pressed = false;
-    	}
-    	break;
-
-	default:
-		if (record->event.pressed) {
-		s_cut_pressed = false;
-		SLP_pressed = false;
-		}
-
   }//end of switch
 
 
-  if (!process_naginata(keycode, record))
-        return false;
+  if (!process_naginata(keycode, record)){
+	  if(record->event.pressed){
+		  set_keycode_prev(keycode, record->event.time);
+	  }
+      return false;
+  }
+
+  if(record->event.pressed)
+    set_keycode_prev(keycode, record->event.time);
 
   return true;
 }
