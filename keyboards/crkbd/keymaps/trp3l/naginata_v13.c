@@ -146,12 +146,16 @@ const uint32_t ng_key[] = {
 //trp3l ng_ex_tools
 #ifdef SAMEHAND_SHFT
 uint16_t get_ninputs_i(uint8_t ng_chr){
-	return ninputs[ng_chr];
+	if(ng_chr <= ng_chrcount){
+		return ninputs[ng_chr];
+	}else{
+		return 0;
+	}
 }
 #endif
 #ifdef NG_AUTO_REPEAT
 uint32_t get_ng_key(uint16_t keycode){
-	if(SAFE_RANGE <= keycode && keycode <= NG_SAFE_RANGE){
+	if(SAFE_RANGE <= keycode && keycode < NG_SAFE_RANGE){
 		return ng_key[keycode - NG_Q];
 	}else{
 		return  0;
@@ -165,7 +169,7 @@ void add_chrcount(void){
 		ng_chrcount++;
 }
 void set_ninputs_i(uint16_t keycode){
-	if(SAFE_RANGE <= keycode && keycode <= NG_SAFE_RANGE)
+	if(SAFE_RANGE <= keycode && keycode < NG_SAFE_RANGE)
 		ninputs[ng_chrcount] = keycode;
 }
 #endif
@@ -893,8 +897,8 @@ const uint16_t ng_elem_counti = sizeof ngmapi  / sizeof ngmapi[0];
 
 
 
-/*
-void set_naginata(uint8_t ng_layer, uint16_t *onk, uint16_t *offk) {
+
+/*void set_naginata(uint8_t ng_layer, uint16_t *onk, uint16_t *offk) {
   naginata_layer = ng_layer;
 
   ngon_keys[0]  = *onk;
@@ -1054,6 +1058,7 @@ bool enable_naginata(uint16_t keycode, keyrecord_t *record) {
     if (fghj_buf == 0 && (keycode == ngon_keys[0] || keycode == ngon_keys[1] ||
         keycode == ngoff_keys[0] || keycode == ngoff_keys[1]
 //trp3l   s_cut レイヤに関する条件式を追加
+
 	  ||keycode == s_on_keys[0]  || keycode == s_on_keys[1]  ||
 		keycode == s_off_keys[0] || keycode == s_off_keys[1])
 //trp3l
@@ -1066,8 +1071,9 @@ bool enable_naginata(uint16_t keycode, keyrecord_t *record) {
           (keycode == ngon_keys[1] && fghj_buf == ngon_keys[0])   ) {
 //trp3l
 //s_cut レイヤに関する条件式を追加
-    	s_cut_off();
+   	    s_cut_off();
 //trp3l
+
         naginata_on();
         fghj_buf = 0;
         return false;
@@ -1113,9 +1119,10 @@ bool enable_naginata(uint16_t keycode, keyrecord_t *record) {
 // 薙刀式の入力処理
 bool process_naginata(uint16_t keycode, keyrecord_t *record) {
   if (!is_naginata)
-    // return true;
+//trp3l
     return enable_naginata(keycode, record);
-
+	//return process_ng_combo(keycode, record);
+//trp3l
   if (process_modifier(keycode, record))
     return true;
 

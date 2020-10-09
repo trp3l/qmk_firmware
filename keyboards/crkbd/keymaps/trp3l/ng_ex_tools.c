@@ -1,5 +1,65 @@
 #include QMK_KEYBOARD_H
 #include "naginata.h"
+#include "ng_ex_tools.h"
+
+static int n_modifier = 0;
+
+bool is_mod_user(uint16_t keycode){
+	return (IS_MOD(keycode) || (QK_MOD_TAP <= keycode && keycode <= QK_MOD_TAP_MAX) );
+}
+void mods_count_user(uint16_t keycode, keyrecord_t *record){
+	if(is_mod_user(keycode)){
+		if(record->event.pressed){
+			n_modifier++;
+		}else{
+			n_modifier--;
+		}
+	}
+}
+
+int get_mods_user(void){
+	return n_modifier;
+}
+
+typedef struct {
+uint16_t keycode;
+uint16_t time;
+bool double_tapped;
+} event_prev_t;
+
+static event_prev_t event_prev ={ .keycode = 0, .time = 0, .double_tapped = false };
+
+event_prev_t *recode_prev = &event_prev;
+
+uint16_t get_keycode_prev(void){
+	return event_prev.keycode;
+}
+uint16_t get_pressed_time_prev(void){
+	return event_prev.time;
+}
+
+bool get_double_tap_state(void){
+	return event_prev.double_tapped;
+}
+void set_keycode_prev(uint16_t keycode, uint16_t time){
+	event_prev.keycode = keycode;
+	event_prev.time = time;
+	if(event_prev.double_tapped)
+		event_prev.double_tapped = (keycode == event_prev.keycode);
+}
+
+bool is_released_within_time( uint16_t keycode, uint16_t tapping_tarm){
+	return ((keycode == event_prev.keycode) && timer_elapsed(event_prev.time) < tapping_tarm );
+}
+
+bool is_double_tapped_within_time( uint16_t keycode, uint16_t tapping_tarm){
+	if (is_released_within_time( keycode, tapping_tarm) ){
+		event_prev.double_tapped = true;
+	}else{
+		event_prev.double_tapped = false;
+	}
+	return event_prev.double_tapped;
+}
 
 #define B_Q    (1UL<<0)
 #define B_W    (1UL<<1)
@@ -39,67 +99,43 @@
 
 #define B_SHFT (1UL<<30)
 
+//薙刀式combo拡張パッケージ
+/*
+typedef struct{
+	uint8_t layer;
+	uint16_t onkeys[2];
+	uint16_t offkeys[2];
+} ng_combo_action_t;
 
-static int n_modifier = 0;
+static ng_combo_action_t ng_combos[2];
+void set_ngcombos(uint8_t ng_layer, uint16_t *onk, uint16_t *offk, uint8_t s_layer, uint16_t *s_on, uint16_t *s_off) {
 
-bool is_mod_user(uint16_t keycode){
-	return (IS_MOD(keycode) || (QK_MOD_TAP <= keycode && keycode <= QK_MOD_TAP_MAX) );
+  ng_combos[0].layer = ng_layer;
+  ng_combos[0].onkeys[0]  = *onk;
+  ng_combos[0].onkeys[1]  = *(onk+1);
+  ng_combos[0].offkeys[0] = *offk;
+  ng_combos[0].offkeys[1] = *(offk+1);
+
+  ng_combos[1].layer = ng_layer;
+  ng_combos[1].onkeys[0]  = *s_on;
+  ng_combos[1].onkeys[1]  = *(s_on+1);
+  ng_combos[1].offkeys[0] = *s_off;
+  ng_combos[1].offkeys[1] = *(s_off+1);
 }
-void mods_count_user(uint16_t keycode, keyrecord_t *record){
-	if(is_mod_user(keycode)){
-		if(record->event.pressed){
-			n_modifier++;
-		}else{
-			n_modifier--;
-		}
+bool process_ng_combo(uint16_t keycode, keyrecord_t *record){
+	bool result = false;
+	for(int i = 0; i < 2; i++){
+		set_naginata(ng_combos[i].layer, ng_combos[i].onkeys, ng_combos[i].offkeys);
+		result = enable_naginata(keycode, record);
+		if(!result)
+			break;
 	}
+	return result;
 }
 
-int get_mods_user(void){
-	return n_modifier;
-}
+}*/
 
-typedef struct {
-uint16_t keycode;
-uint16_t time;
-bool is_double_tapped;
-} event_prev_t;
-
-static event_prev_t event_prev ={ .keycode = 0, .time = 0, .is_double_tapped = false };
-
-event_prev_t *recode_prev = &event_prev;
-
-uint16_t get_keycode_prev(void){
-	return event_prev.keycode;
-}
-uint16_t get_pressed_time_prev(void){
-	return event_prev.time;
-}
-
-bool get_double_tap_state(void){
-	return event_prev.is_double_tapped;
-}
-void set_keycode_prev(uint16_t keycode, uint16_t time){
-	event_prev.keycode = keycode;
-	event_prev.time = time;
-	if(event_prev.is_double_tapped)
-		event_prev.is_double_tapped = (keycode == event_prev.keycode);
-}
-
-bool is_released_within_time( uint16_t keycode, uint16_t tapping_tarm){
-	return ((keycode == event_prev.keycode) && timer_elapsed(event_prev.time) < tapping_tarm );
-}
-
-bool is_double_tapped_within_time( uint16_t keycode, uint16_t tapping_tarm){
-	if (is_released_within_time( keycode, tapping_tarm) ){
-		event_prev.is_double_tapped = true;
-	}else{
-		event_prev.is_double_tapped = false;
-	}
-	return event_prev.is_double_tapped;
-}
-
-
+#define SAMEHAND_SHFT
 
 //同手シフト拡張パッケージ
 #ifdef SAMEHAND_SHFT
@@ -132,8 +168,8 @@ const uint16_t ng_elem_counts  = sizeof ngmaps   / sizeof ngmaps[0];
 //3つの状態で前回の同手シフトを記録しておく。（keycombではshftの左右が判定できない）
 enum samehand_statuses{
 	NO_SFT,
-	L_SHSFT,
-	R_SHSFT,
+	SH_LSHFT,
+	SH_RSHFT,
 };
 static uint8_t samehand_status = 0;
 static const uint32_t LEFT_KEY = B_Q|B_W|B_E|B_R|B_T|
@@ -143,6 +179,23 @@ static const uint32_t LEFT_KEY = B_Q|B_W|B_E|B_R|B_T|
 //naginata.c のninputs[]を使いたい。
 uint16_t get_ninputs_i(uint8_t ng_chr);
 
+uint8_t samehand_shft_state(void){
+	uint8_t bstate = NO_SFT;
+	for (int i=0; get_ninputs_i(i); i++){
+		if(get_ninputs_i(i) == NG_LSHFT){
+			if(bstate == SH_RSHFT) break;
+			bstate = SH_LSHFT;
+		}else if(get_ninputs_i(i) == NG_RSHFT) {
+			if(bstate == SH_LSHFT) break;
+			bstate = SH_RSHFT;
+		}
+	}
+	if(samehand_status != NO_SFT && bstate == NO_SFT){
+		return samehand_status;
+	}else{
+		return bstate;
+	}
+}
 bool samehand_shft(int nt, uint32_t keycomb_buf){
 	naginata_keymap_same bngmaps; // PROGMEM buffer
 	//シフト入力中でない時は判定をスキップして終了。
@@ -151,34 +204,32 @@ bool samehand_shft(int nt, uint32_t keycomb_buf){
 	  //キーコードに左手のキーが含まれている & Lシフトを押している場合に同手シフトを起動する。
 	  //連続シフト中などで、Lシフトより先に右手のキーやRシフトを押していた場合は起動しない。
 	  //左手のキーはNG_OOで検出しても良いが、分岐条件が膨大になるため機械的に導出できるkeycombを採用した。
-	if( get_ninputs_i(0)!=NG_RSHFT && ((keycomb_buf & LEFT_KEY) > 0) &&
-	   (get_ninputs_i(0)==NG_LSHFT || get_ninputs_i(1)==NG_LSHFT || samehand_status == L_SHSFT) ){
+	if(keycomb_buf & LEFT_KEY && samehand_shft_state() == SH_LSHFT ){
 
 		for (int i = 0; i < ng_elem_counts; i++) {
 			memcpy_P(&bngmaps, &ngmaps[i], sizeof(bngmaps));
 			if (keycomb_buf == bngmaps.key) {
 			  send_string(bngmaps.kana);
 			  compress_buffer(nt);
-			  samehand_status = L_SHSFT;
+			  samehand_status = SH_LSHFT;
 			  return true;
 			}
 		}
-		samehand_status = L_SHSFT;
+		samehand_status = SH_LSHFT;
 		return false;
 	  //Lと同様。メモリ削減のため、右手のキーもLEFT_KEYで検出できるようにしてある。
-	}else if( get_ninputs_i(0)!=NG_LSHFT && (keycomb_buf & ~(LEFT_KEY|B_SHFT)) > 0 &&
-			 (get_ninputs_i(0)==NG_RSHFT || get_ninputs_i(1)==NG_RSHFT || samehand_status == R_SHSFT) ){
+	}else if(keycomb_buf & ~(LEFT_KEY|B_SHFT) && samehand_shft_state() == SH_RSHFT ){
 
 		for (int i = 0; i < ng_elem_counts; i++) {
 	        memcpy_P(&bngmaps, &ngmaps[i], sizeof(bngmaps));
 	        if (keycomb_buf == bngmaps.key) {
 	          send_string(bngmaps.kana);
 	          compress_buffer(nt);
-			  samehand_status = R_SHSFT;
+			  samehand_status = SH_RSHFT;
 			  return true;
 	        }
 		  }
-		samehand_status = R_SHSFT;
+		samehand_status = SH_RSHFT;
         return false;
 	}else{
 		samehand_status = NO_SFT;

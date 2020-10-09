@@ -32,7 +32,7 @@ enum keymap_layers {
 };
 
 enum custom_keycodes {
-  S_CUT_W = NG_SAFE_RANGE,
+  S_CUT = NG_SAFE_RANGE,
   S_TEXT,
   BACKLIT,
   RGBRST
@@ -56,7 +56,6 @@ void process_combo_event(uint8_t combo_index, bool pressed) {
   switch(combo_index) {
   	case S_CUT_ON_CMB:
         if (pressed) {
-        tap_code(KC_BSPC);
       	 layer_on(_S_CUT);
         }
         break;
@@ -94,19 +93,20 @@ qk_tap_dance_action_t tap_dance_actions[] = {
 #define LT_ENT LT(_LOWER,KC_ENTER)
 #define CTL_T_BS LCTL_T(KC_BSPACE)
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-	[_XIN] = LAYOUT(
-		LALT_T(KC_ESCAPE),	KC_Q, 		KC_A,	 KC_R,	 KC_D,	   KC_RIGHT,		KC_LEFT, KC_BSPACE,KC_U,	   KC_P,	KC_Z,	RALT_T(KC_PSCREEN),
-		LSFT_T(KC_DELETE),	KC_W,		KC_S,	 KC_H,	 KC_T,	   KC_G,			KC_Y,	 KC_I,	   KC_E,	   KC_O,	KC_N,	RCTL_T(KC_BSPACE),
-			LSFT(KC_KPS),	JP_COLN,	KC_F,	 KC_V,	 KC_C,	   KC_X,			KC_M,	 KC_L,	   KC_J,	   KC_B,	KC_K,	RGUI_T(KC_SLEP),
-								TD(_PRN),  S_CUT_W,  LT_TAB,		LT_ENT, RSFT_T(KC_SPACE), TD(COMMA_SCOL)
-		),
+    [_XIN] = LAYOUT(
+
+         LALT_T(  KC_ESC),      KC_Q,      KC_A,    KC_R  ,  KC_D,KC_RGHT  ,KC_LEFT,       KC_BSPC,        KC_U, KC_P,KC_Z,RALT_T(KC_PSCREEN),
+         LSFT_T(KC_DELETE),     KC_W, KC_S,KC_H,     KC_T,     KC_G, KC_Y,   KC_I,       KC_E,  KC_O,      KC_N, RCTL_T(KC_BSPACE),
+           LSFT(KC_KPS),       JP_COLN,KC_F,KC_V,    KC_C,     KC_X,   KC_M, KC_L,      KC_J,KC_B,KC_K,    RGUI_T(KC_SLEP),
+             TD(_PRN),          S_CUT,    LT_TAB,   LT_ENT,   RSFT_T(     KC_SPACE),   TD(     COMMA_SCOL  )
+                ),
 
 
 	[_NAGINATA] = LAYOUT(
-		_______ ,NG_Q,   NG_W,   NG_E,    NG_R,    NG_T,      NG_Y,    NG_U,    NG_I,    NG_O,    NG_P,    _______,
-		_______ ,NG_A,   NG_S,   NG_D,    NG_F,    NG_G,      NG_H,    NG_J,    NG_K,    NG_L,    NG_SCLN, _______,
-		_______ ,NG_Z,   NG_X,   NG_C,    NG_V,    NG_B,      NG_N,    NG_M,    NG_COMM, NG_DOT,  NG_SLSH, _______,
-						       _______, NG_SHFT2,  LT_TAB,  LT_ENT, NG_SHFT, _______
+		_______ , NG_Q,    NG_W,    NG_E,   NG_R,   NG_T,      NG_Y,    NG_U,    NG_I,    NG_O,    NG_P,    _______,
+		_______ , NG_A,    NG_S,    NG_D,   NG_F,   NG_G,      NG_H,    NG_J,    NG_K,    NG_L,    NG_SCLN, _______,
+		_______ , NG_Z,    NG_X,    NG_C,   NG_V,   NG_B,      NG_N,    NG_M,    NG_COMM, NG_DOT,  NG_SLSH, _______,
+		                        _______,NG_SHFT2,   LT_TAB,  LT_ENT,    NG_SHFT, _______
 		),
 
 
@@ -141,7 +141,6 @@ int RGB_current_mode;
 
 
 void matrix_init_user(void) {
-
 	  uint16_t ngonkeys[]  = {KC_Y, KC_I};
 	  uint16_t ngoffkeys[] = {KC_T, KC_G};
    //s_cut切り替え
@@ -230,7 +229,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   }*/
 
   switch (keycode) {
-    case S_CUT_W:
+    case S_CUT:
 	  if (record->event.pressed) {
 		 if(is_double_tapped_within_time(keycode, 200)){
 			 register_code(KC_BSPACE);

@@ -11,7 +11,10 @@ void set_keycode_prev(uint16_t keycode, uint16_t time);
 bool is_released_within_time( uint16_t keycode, uint16_t tapping_tarm);
 bool is_double_tapped_within_time( uint16_t keycode, uint16_t tapping_tarm);
 bool get_double_tap_state(void);
-
+/*
+bool process_ng_combo(uint16_t keycode, keyrecord_t *record);
+void set_ngcombos(uint8_t ng_layer, uint16_t *onk, uint16_t *offk, uint8_t s_layer, uint16_t *s_on, uint16_t *s_off);
+*/
 #ifdef SAMEHAND_SHFT
 	bool samehand_shft(int nt, uint32_t keycomb_buf);
 #endif
