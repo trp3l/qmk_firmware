@@ -14,33 +14,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
 void naginata_type(void);
 void naginata_clear(void);
-void compress_buffer(int nt);
-bool naginata_lookup(int nt, bool shifted);
 
-bool process_modifier(uint16_t, keyrecord_t *);
+void naginata_mode(uint16_t, keyrecord_t *);
 
 void naginata_on(void);
 void naginata_off(void);
+void makesure_mode(void);
 bool naginata_state(void);
-//s_cutここから
-void s_cut_on(void);
-void s_cut_off(void);
-//s_cutここまで
-
-void mac_live_conversion_toggle(void);
-void mac_live_conversion_on(void);
-void mac_live_conversion_off(void);
 
 bool process_naginata(uint16_t, keyrecord_t *);
-//s_cut用に後半を追加
-void set_naginata(uint8_t, uint16_t *, uint16_t *, uint8_t, uint16_t *, uint16_t *);
-//void set_naginata(uint8_t, uint16_t *, uint16_t *);
-
-// bool enable_naginata(uint16_t, keyrecord_t *);
+void set_naginata(uint8_t);
 
 typedef enum naginata_keycodes {
   NG_Q = SAFE_RANGE, // 薙刀式シフトキー
@@ -77,14 +62,8 @@ typedef enum naginata_keycodes {
   NG_SLSH,
 
   NG_SHFT,
-  NG_SHFT2,
-
-  //trp3l
-  NG_RIGHT,
-  NG_LEFT,
-  //trp3l
 } NGKEYS;
 
-#define NG_SAFE_RANGE SAFE_RANGE+34
+#define NG_SAFE_RANGE SAFE_RANGE+31
 
 

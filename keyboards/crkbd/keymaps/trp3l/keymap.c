@@ -39,17 +39,15 @@ enum custom_keycodes {
 };
 
 //comboは使わなくなりました。-------------------------------------------------------------------------
-
-/*enum combo_events {
+/*
+enum combo_events {
   S_CUT_ON_CMB,
   S_CUT_OFF_CMB
 };
-const uint16_t PROGMEM s_cut_on_combo[]  = {KC_D, KC_R, COMBO_END};
-const uint16_t PROGMEM s_cut_off_combo[] = {KC_C, KC_D, COMBO_END};
+const uint16_t PROGMEM s_cut_on_combo[]  = {KC_T, KC_X, COMBO_END};
 
 combo_t key_combos[COMBO_COUNT] = {
   [S_CUT_ON_CMB]		= COMBO_ACTION(s_cut_on_combo),
-  [S_CUT_OFF_CMB]		= COMBO_ACTION(s_cut_off_combo),
 };
 
 void process_combo_event(uint8_t combo_index, bool pressed) {
@@ -59,11 +57,6 @@ void process_combo_event(uint8_t combo_index, bool pressed) {
       	 layer_on(_S_CUT);
         }
         break;
-    case S_CUT_OFF_CMB:
-      if (pressed) {
-    	 layer_off(_S_CUT);
-      }
-      break;
   }
 }*/
 //tap_danc----------------------------------------------------------------------
@@ -184,6 +177,9 @@ const char *read_keylogs(void);
 
 void matrix_scan_user(void) {
    iota_gfx_task();
+   //samehand_proccess(keycode, record);
+
+   }
 }
 
 void matrix_render_user(struct CharacterMatrix *matrix) {
