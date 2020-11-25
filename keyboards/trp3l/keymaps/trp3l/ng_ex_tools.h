@@ -20,4 +20,5 @@ void set_ngcombos(uint8_t ng_layer, uint16_t *onk, uint16_t *offk, uint8_t s_lay
 #endif
 #ifdef NG_AUTO_REPEAT
 	bool auto_repeat_keycode(uint16_t keycode, keyrecord_t *record);
+	void auto_repeat_matrix_scan(void);
 #endif

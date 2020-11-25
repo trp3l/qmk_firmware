@@ -79,7 +79,7 @@ bool is_double_tapped_within_time( uint16_t keycode, uint16_t tapping_tarm){
 #define B_F    (1UL<<13)
 #define B_G    (1UL<<14)
 
-#define B_H
+#define B_H    (1UL<<15)
 #define B_J    (1UL<<16)
 #define B_K    (1UL<<17)
 #define B_L    (1UL<<18)
@@ -241,17 +241,18 @@ bool samehand_shft(int nt, uint32_t keycomb_buf){
 #ifdef NG_AUTO_REPEAT
 
 //オートリピート開始時に引っ掛かりを設定する。二連打とオートリピート発火を二回目押下後にも選択したいときはここ。
+//マスター側のキーボードはなぜかスキャンが遅いので、ラグくて調整が難しい。（おま環？）
 //#define FIRST_DELAY
 #ifdef FIRST_DELAY
 //引っ掛かりの長さ設定。ミリ秒単位。
-#define F_DELAY_TIME 500
+#define f_delay_time 500
 #endif
 //オートリピートのトグル速度。ミリ秒。
-#define AUTO_REPEAT_TOGGLE 30
+#define auto_repeat_toggle 30
 //オートリピート発火を押下時ではなく、離した時からの経過時間で判定したい場合はコメントアウトを外してください。
 //#define AUTO_REPEAT_TRIGGER_IS_RELEASED
 //オートリピートを開始するために必要なキーの連打速度。ミリ秒。
-#define AUTO_REPEAT_TAPPING_TERM 180
+#define auto_repeat_tapping_term 180
 //オートリピートしたいキーをここに設定する。pgupとか追加したいときはここ。
 const PROGMEM uint32_t auto_repeat_keycodemap[] = {
 	B_T,
@@ -283,21 +284,6 @@ uint32_t get_ng_key(uint16_t keycode);
 void add_chrcount(void);
 void set_ninputs_i(uint16_t keycode);
 
-static bool is_auto_repeating = false;
-uint16_t last_auto_repeat_key_typed_time = 0;
-
-void auto_repeat_matrix_scan(void){
-	if(is_auto_repeating && timer_elapsed(last_auto_repeat_key_typed_time) > AUTO_REPEAT_TOGGLE){
-#ifdef FIRST_DELAY
-		if(last_auto_repeat_key_typed_time == 0)
-			SEND_STRING(SS_DELAY(F_DELAY_TIME));
-#endif
-		set_ninputs_i(get_keycode_prev());
-		add_chrcount();
-		naginata_type();
-		last_auto_repeat_key_typed_time = timer_read();
-	}
-}
 
 bool auto_repeat_keycode(uint16_t keycode, keyrecord_t *record){
 
@@ -310,15 +296,30 @@ bool auto_repeat_keycode(uint16_t keycode, keyrecord_t *record){
 		    	return false;
 		    	break;
 		}
-		if( is_double_tapped_within_time(keycode, AUTO_REPEAT_TAPPING_TERM) ){
+		if( is_double_tapped_within_time(keycode, auto_repeat_tapping_term) ){
 
 			uint32_t keycomb_s = (get_keycomb() | get_ng_key(keycode));// キーの重ね合わせ
 			uint32_t keycomb_sb = 0UL;
 			//キーコードの検索。
 			for(int i = 0; i < auto_repeat_elem_counts; i++){
 				memcpy_P(&keycomb_sb , &auto_repeat_keycodemap[i], sizeof(keycomb_sb));
-				if(keycomb_sb == keycomb_s){//オートリピートのフラグをtrueに。matrix_scan_userに動作を引き継ぐ。
-					is_auto_repeating =true;
+				if(keycomb_sb == keycomb_s){
+					//初期遅延を発生させ、二連打とオートリピート発火を汲み分ける。
+					#ifdef FIRST_DELAY
+					SEND_STRING(SS_DELAY(f_delay_time));
+					matrix_scan();
+					if(!matrix_is_on(record->event.key.row, record->event.key.col)){
+						return false;
+					}
+					#endif
+					//キーを離すまでキーコードを発行し続ける。トグル速度を早くするとラグが出てしまう。
+					while( matrix_is_on(record->event.key.row, record->event.key.col) ){
+						set_ninputs_i(keycode);
+						 add_chrcount();
+						naginata_type();
+						SEND_STRING(SS_DELAY(auto_repeat_toggle));
+						matrix_scan();
+					}
 					return true;
 				}
 			}
@@ -330,10 +331,6 @@ bool auto_repeat_keycode(uint16_t keycode, keyrecord_t *record){
 		}
 
 	}else{//key release
-		if(is_auto_repeating){
-			is_auto_repeating = false;
-			last_auto_repeat_key_typed_time = 0;
-		}
 		#ifdef AUTO_REPEAT_TRIGGER_IS_RELEASED
 			set_event_prev(keycode, record->event.time);
 		#endif

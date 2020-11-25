@@ -56,6 +56,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define NAGINATA_KOUCHI_SHIFT
 #define SAMEHAND_SHFT
 #define NG_AUTO_REPEAT
+
 //--------------------------------------------------------------------------------
 //#define COMBO_COUNT 1
 //#define COMBO_TERM 800
