@@ -1,20 +1,20 @@
-# owl8
+# Claw44
 
-![owl8](https://raw.githubusercontent.com/yfuku/owl8/master/images/owl8.jpg)
+![Claw44](https://i.imgur.com/5a8iogl.jpg)
 
-macropad
+A split keyboard with 3x6 vertically staggered keys and 4 thumb keys.
 
 * Keyboard Maintainer: [yfuku](https://github.com/yfuku)
-* Hardware Supported: owl8 PCB, Pro Micro
+* Hardware Supported: Claw44 PCB, ProMicro
 * Hardware Availability: https://shop.dailycraft.jp/
 
 Make example for this keyboard (after setting up your build environment):
 
-    make dailycraft/owl8:default
+    make dailycraft/claw44:default
 
 Flashing example for this keyboard:
 
-    make dailycraft/owl8:default:flash
+    make dailycraft/claw44:default:flash
 
 See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
 
@@ -23,8 +23,4 @@ See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_to
 Enter the bootloader in 2 ways:
 
 * **Physical reset button**: Briefly press the button on the PCB
-<<<<<<< HEAD
-* **Keycode in layout**: Press the key mapped to `QK_BOOT` if it is available
-=======
 * **Keycode in layout**: Press the key mapped to `RESET` if it is available
->>>>>>> topic-claw44-rev2
