@@ -1,4 +1,2 @@
-# QMKのビルドシステムに対し、標準的なprintf実装を使うよう指示します
-PRINTF_LIB = printf
-COMMON_VPATH += $(LIB_PATH)/printf
+#rp2040に必要
 SERIAL_DRIVER = vendor
